@@ -12,6 +12,10 @@ billy/
   tests/       Playwright end-to-end test for the extension, plus its screenshots
 ```
 
+## Slides
+
+The [product pitch and demo](docs/slides/README.md) includes an editable PowerPoint, a PDF copy and presenter notes. It covers the working prototype, the SDG 12 idea and a proposed shopper pilot.
+
 ## Run it
 
 ```bash
