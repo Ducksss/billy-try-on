@@ -2,6 +2,8 @@
 
 Billy is a virtual try-on Chrome extension for pre-loved and surplus clothing. A shopper adds one photo of themselves, then drags a garment photo from any shop or resale listing onto it, and Billy generates a picture of them wearing it. Looks can be saved, rated ("Would you buy it?") and compared side by side before buying. It was built for SDG 12 (Challenge Statement 2) and modelled on [Anywear](https://anywear.decart.ai/), which does live-camera try-on with Decart's realtime model; Billy uses a photo instead, so it runs on any image API and any laptop.
 
+Live: **https://billy-try-on.vercel.app** (extension download at [/extension](https://billy-try-on.vercel.app/extension)).
+
 ```
 billy/
   web/         Next.js 16 app: landing page, studio, pre-loved feed, listing pages, try-on API
@@ -19,7 +21,15 @@ cp .env.example .env.local   # add OPENAI_API_KEY
 npm run dev                  # http://localhost:3000
 ```
 
-Load the extension: open `chrome://extensions`, switch on Developer mode, press **Load unpacked** and choose `extension/`. Click Billy in the toolbar to open the side panel and add a photo (or borrow one of the two AI-generated example models). The extension talks to `http://localhost:3000` by default; change it from the gear icon in the side panel. The web app also serves the extension as a zip at `/billy-extension.zip` with install steps at `/extension`.
+Load the extension: open `chrome://extensions`, switch on Developer mode, press **Load unpacked** and choose `extension/`. Click Billy in the toolbar to open the side panel and add a photo (or borrow one of the two AI-generated example models). Loaded from the repo, the extension talks to `http://localhost:3000`. The zip served at `/billy-extension.zip` is packed with the production server baked in. Either can be repointed from the gear icon in the side panel.
+
+## Deploy
+
+The web app deploys to the Vercel project `billy-try-on` (team `ducksss-projects`) from `web/`. `web/vercel.json` pins the Next.js framework preset. Production env vars: `OPENAI_API_KEY`, `BILLY_TRYON_PROVIDER=openai`, `BILLY_OPENAI_MODEL=gpt-image-2`, `BILLY_OPENAI_QUALITY=medium`, `BILLY_RATE_LIMIT_PER_HOUR=20`.
+
+```bash
+npm run deploy   # repacks the extension zip for production, then vercel deploy --prod from web/
+```
 
 ## How a try-on works
 
@@ -47,7 +57,8 @@ From the repo root:
 | --- | --- |
 | `npm run assets` | Generates the 12 catalogue garments and 2 example models with `gpt-image-2` (skips existing files) |
 | `npm run looks` | Renders the 8 landing-page looks through the running app's own `/api/try-on` |
-| `npm run pack:extension` | Rebuilds `web/public/billy-extension.zip`. Run it after changing `extension/` |
+| `npm run pack:extension` | Rebuilds `web/public/billy-extension.zip` pointing at production. Run it after changing `extension/` |
+| `npm run pack:extension:local` | Same, but the zip defaults to `http://localhost:3000` |
 | `npm run test:extension` | Loads the extension in Playwright's Chromium against a mock shop page and checks 13 behaviours, including one real try-on. Needs `npm run dev`. Add `-- --skip-generate` to skip the paid call |
 
 ## Demo data
@@ -56,7 +67,7 @@ All garment photos, the two models (Mei and Arjun) and every look on the site ar
 
 ## Known limits
 
-- The rate limiter is in memory, so it resets on deploy and is per instance on serverless hosts.
+- The production try-on endpoint is public and spends the OpenAI key on every call. The only guard is the in-memory per-IP limit (20 an hour in production), which resets on deploy and is per instance.
 - The server-fetch guard checks hostnames, not resolved IPs.
 - The extension asks for `<all_urls>` so it can read product images on any shop. A store release would need to justify that or switch to `activeTab`.
 - The right-click menu and the in-page **Open Billy** button (`chrome.sidePanel.open` from a content-script click) are not covered by the automated test. Check them by hand in Chrome.

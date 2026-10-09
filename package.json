@@ -6,8 +6,10 @@
     "dev": "npm --prefix web run dev",
     "assets": "node scripts/generate-assets.mjs",
     "looks": "node scripts/generate-looks.mjs",
-    "pack:extension": "node scripts/pack-extension.mjs",
-    "test:extension": "node tests/extension.e2e.mjs"
+    "pack:extension": "node scripts/pack-extension.mjs --server https://billy-try-on.vercel.app",
+    "test:extension": "node tests/extension.e2e.mjs",
+    "pack:extension:local": "node scripts/pack-extension.mjs",
+    "deploy": "npm run pack:extension && cd web && vercel deploy --prod"
   },
   "devDependencies": {
     "playwright": "1.63.0"

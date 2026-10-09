@@ -42,8 +42,8 @@ export default function ExtensionPage() {
               ))}
             </ol>
             <p className="mt-10 rounded-2xl bg-surface-2 p-4 text-sm leading-relaxed text-muted">
-              Try-ons run on Billy&apos;s server, <code className="font-mono text-[0.8125rem] text-ink">http://localhost:3000</code> by
-              default. Point the extension at a deployed copy from the gear icon in its side panel.
+              This download runs try-ons on <code className="font-mono text-[0.8125rem] text-ink">billy-try-on.vercel.app</code>.
+              To use your own server instead, change the address from the gear icon in Billy&apos;s side panel.
             </p>
           </div>
 

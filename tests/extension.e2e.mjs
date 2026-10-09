@@ -11,7 +11,8 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const extensionPath = join(root, "extension");
+// BILLY_EXTENSION_PATH tests a packed build (e.g. the unzipped download) instead of extension/.
+const extensionPath = process.env.BILLY_EXTENSION_PATH ?? join(root, "extension");
 const skipGenerate = process.argv.includes("--skip-generate");
 // Mock runs write to their own folder so they never overwrite real-model evidence.
 const shots = join(root, skipGenerate ? "tests/screenshots/mock" : "tests/screenshots");
@@ -56,8 +57,9 @@ try {
   worker.on("console", (m) => m.type() === "error" && workerErrors.push(m.text()));
   const extensionId = worker.url().split("/")[2];
   check("service worker registered", !!extensionId, extensionId);
-  const server = process.env.BILLY_SERVER ?? "http://localhost:3000";
-  await worker.evaluate((url) => chrome.storage.local.set({ serverUrl: url }), server);
+  // A packed build keeps its baked-in default server unless BILLY_SERVER overrides it.
+  const server = process.env.BILLY_SERVER ?? (process.env.BILLY_EXTENSION_PATH ? null : "http://localhost:3000");
+  if (server) await worker.evaluate((url) => chrome.storage.local.set({ serverUrl: url }), server);
 
   // Side panel page, opened as a tab at side-panel width.
   const panel = await context.newPage();
