@@ -9,7 +9,7 @@
     "pack:extension": "node scripts/pack-extension.mjs --server https://billy-try-on.vercel.app",
     "test:extension": "node tests/extension.e2e.mjs",
     "pack:extension:local": "node scripts/pack-extension.mjs",
-    "deploy": "npm run pack:extension && cd web && vercel deploy --prod"
+    "deploy": "npm run pack:extension && vercel deploy --prod"
   },
   "devDependencies": {
     "playwright": "1.63.0"
