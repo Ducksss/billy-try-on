@@ -25,10 +25,12 @@ Load the extension: open `chrome://extensions`, switch on Developer mode, press 
 
 ## Deploy
 
-The web app deploys to the Vercel project `billy-try-on` (team `ducksss-projects`) from `web/`. `web/vercel.json` pins the Next.js framework preset. Production env vars: `OPENAI_API_KEY`, `BILLY_TRYON_PROVIDER=openai`, `BILLY_OPENAI_MODEL=gpt-image-2`, `BILLY_OPENAI_QUALITY=medium`, `BILLY_RATE_LIMIT_PER_HOUR=20`.
+The Vercel project `billy-try-on` (team `ducksss-projects`) is connected to this GitHub repo with `web` as its root directory, so every push to `main` deploys to production and other branches get preview deployments. `web/vercel.json` pins the Next.js framework preset. Production env vars: `OPENAI_API_KEY`, `BILLY_TRYON_PROVIDER=openai`, `BILLY_OPENAI_MODEL=gpt-image-2`, `BILLY_OPENAI_QUALITY=medium`, `BILLY_RATE_LIMIT_PER_HOUR=20`.
+
+After changing `extension/`, run `npm run pack:extension` and commit the new zip so the download stays in sync. To deploy from your machine without pushing, run this from the repo root:
 
 ```bash
-npm run deploy   # repacks the extension zip for production, then vercel deploy --prod from web/
+npm run deploy   # repacks the extension zip, then vercel deploy --prod
 ```
 
 ## How a try-on works
