@@ -1,4 +1,4 @@
-import { blobToJpegDataUrl, DEFAULT_SERVER, getLooks, getMe, getServerUrl, hostOf } from "./shared.js";
+import { blobToJpegDataUrl, DEFAULT_SERVER, getLooks, getMe, getQuality, getServerUrl, hostOf, QUALITY_SECONDS } from "./shared.js";
 
 const $ = (id) => document.getElementById(id);
 const VERDICT = { yes: "Would buy", maybe: "Maybe", no: "Wouldn't buy" };
@@ -7,7 +7,8 @@ const state = {
   me: null,
   looks: [],
   view: "try",
-  run: null, // { id, garment, status: "running" | "done" | "error", image?, error?, savedId?, verdict? }
+  run: null, // { id, garment, quality, status: "running" | "done" | "error", preview?, image?, error?, savedId?, verdict? }
+  quality: "low",
   selected: [],
   feedLoaded: false,
 };
@@ -37,7 +38,9 @@ function renderTry() {
 
   const running = run?.status === "running";
   const done = run?.status === "done";
-  $("stage-img").src = done ? run.image : me;
+  const preview = running && run.preview;
+  $("stage-img").src = done ? run.image : preview || me;
+  $("stage-img").classList.toggle("preview", !!preview);
   $("stage-before").src = me;
   $("stage-before").hidden = true;
   $("scan").hidden = !running;
@@ -56,6 +59,7 @@ function renderTry() {
     const link = g.listingUrl || g.pageUrl;
     $("open-item").hidden = !link;
     if (link) $("open-item").href = link;
+    $("detail").hidden = run.quality !== "low";
     $("save").textContent = run.savedId ? "Saved" : "Save look";
     $("save").disabled = !!run.savedId;
     for (const b of document.querySelectorAll("[data-verdict]")) b.setAttribute("aria-pressed", String(run.verdict === b.dataset.verdict));
@@ -63,25 +67,34 @@ function renderTry() {
 }
 
 function renderStatus() {
-  if (state.run?.status !== "running") return;
-  const s = Math.round((Date.now() - state.run.startedAt) / 1000);
-  $("status-title").textContent = `Fitting ${state.run.garment.title ? `the ${state.run.garment.title}` : "it"} on you`;
-  $("status-sub").textContent = `${s}s · ${s < 30 ? "usually about 25s" : "almost there"}`;
+  const run = state.run;
+  if (run?.status !== "running") return;
+  const s = Math.round((Date.now() - run.startedAt) / 1000);
+  const expected = QUALITY_SECONDS[run.quality];
+  $("status-title").textContent = run.preview
+    ? "Adding the finishing details"
+    : `Fitting ${run.garment.title ? `the ${run.garment.title}` : "it"} on you`;
+  $("status-sub").textContent = `${s}s · ${s <= expected + 5 ? `usually about ${expected}s` : "almost there"}`;
 }
 
-async function runTryOn(garment) {
+function renderQuality() {
+  for (const b of document.querySelectorAll("[data-quality]")) b.setAttribute("aria-checked", String(b.dataset.quality === state.quality));
+  $("quality-hint").textContent = state.quality === "low" ? "Quick suits most garments" : "Sharper prints and texture";
+}
+
+async function runTryOn(garment, quality = state.quality) {
   if (!state.me) {
     setView("try");
     return;
   }
   const id = crypto.randomUUID();
-  state.run = { id, garment, status: "running", startedAt: Date.now() };
+  state.run = { id, garment, quality, status: "running", startedAt: Date.now() };
   setView("try");
   renderTry();
   renderStatus();
   clearInterval(tick);
   tick = setInterval(renderStatus, 500);
-  const res = await chrome.runtime.sendMessage({ type: "billy:tryon", garment }).catch((e) => ({ error: e.message }));
+  const res = await chrome.runtime.sendMessage({ type: "billy:tryon", garment, jobId: id, quality }).catch((e) => ({ error: e.message }));
   if (state.run?.id !== id) return;
   clearInterval(tick);
   if (!res || res.error) {
@@ -300,6 +313,22 @@ function wire() {
     });
   }
 
+  for (const b of document.querySelectorAll("[data-quality]")) {
+    b.addEventListener("click", () => chrome.storage.local.set({ quality: b.dataset.quality }));
+  }
+
+  $("detail").addEventListener("click", () => {
+    if (state.run?.status === "done") runTryOn(state.run.garment, "medium");
+  });
+
+  // Previews of the look streamed from the service worker while it renders.
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message?.type !== "billy:partial" || state.run?.id !== message.jobId || state.run.status !== "running") return;
+    state.run.preview = message.image;
+    renderTry();
+    renderStatus();
+  });
+
   $("compare").addEventListener("click", openCompare);
   $("close-compare").addEventListener("click", () => ($("compare-sheet").hidden = true));
 
@@ -322,7 +351,14 @@ function wire() {
       state.selected = state.selected.filter((id) => state.looks.some((l) => l.id === id));
       renderLooks();
     }
-    if (area === "local" && changes.serverUrl) state.feedLoaded = false;
+    if (area === "local" && changes.serverUrl) {
+      state.feedLoaded = false;
+      checkMirror();
+    }
+    if (area === "local" && changes.quality) {
+      state.quality = changes.quality.newValue === "medium" ? "medium" : "low";
+      renderQuality();
+    }
     if (area === "session" && changes.pending?.newValue) takePending(changes.pending.newValue);
   });
 }
@@ -334,6 +370,20 @@ async function takePending(pending) {
   runTryOn(pending);
 }
 
+// Shows the live mirror link only when the server has it switched on.
+async function checkMirror() {
+  const server = await getServerUrl();
+  const link = $("mirror-link");
+  try {
+    const res = await fetch(`${server}/api/mirror/token`);
+    const { enabled } = res.ok ? await res.json() : {};
+    link.hidden = !enabled;
+    link.href = `${server}/mirror`;
+  } catch {
+    link.hidden = true;
+  }
+}
+
 async function setModelImages() {
   const server = await getServerUrl();
   for (const img of document.querySelectorAll("[data-model-img]")) img.src = `${server}/models/${img.dataset.modelImg}.jpg`;
@@ -341,9 +391,11 @@ async function setModelImages() {
 
 async function init() {
   wire();
-  [state.me, state.looks] = await Promise.all([getMe(), getLooks()]);
+  [state.me, state.looks, state.quality] = await Promise.all([getMe(), getLooks(), getQuality()]);
   setModelImages();
+  checkMirror();
   renderTry();
+  renderQuality();
   renderLooks();
   const { pending } = await chrome.storage.session.get("pending");
   takePending(pending);

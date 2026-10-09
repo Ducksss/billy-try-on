@@ -27,3 +27,30 @@ export function downloadDataUrl(dataUrl: string, filename: string) {
   a.download = filename;
   a.click();
 }
+
+// Opens the system share sheet with the image where the browser supports sharing files
+// (phones, Chrome on Windows and ChromeOS). Elsewhere it copies the image to the clipboard.
+export async function shareImage(dataUrl: string, { title, text }: { title: string; text: string }) {
+  const blob = await (await fetch(dataUrl)).blob();
+  const file = new File([blob], "billy-look.jpg", { type: blob.type || "image/jpeg" });
+  if (navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title, text });
+      return "shared" as const;
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return "cancelled" as const;
+    }
+  }
+  // Clipboard images must be PNG.
+  const bitmap = await createImageBitmap(blob);
+  const canvas = document.createElement("canvas");
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+  canvas.getContext("2d")!.drawImage(bitmap, 0, 0);
+  bitmap.close();
+  const png = await new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Couldn't copy the image."))), "image/png"),
+  );
+  await navigator.clipboard.write([new ClipboardItem({ "image/png": png })]);
+  return "copied" as const;
+}

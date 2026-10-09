@@ -28,14 +28,25 @@ const fixture = readFileSync(join(root, "tests/fixtures/shop.html"));
 const MOCK = "http://127.0.0.1:4173";
 const mockLook = `data:image/jpeg;base64,${readFileSync(join(root, "tests/fixtures/mock-look.jpg"), "base64")}`;
 let mockCalls = 0;
-// Serves the fixture shop page, and stands in for Billy's /api/try-on when mocking.
+const mockRequests = [];
+// Serves the fixture shop page, and stands in for Billy's /api/try-on when mocking. Like the
+// real server it streams newline-delimited JSON (a preview, then the look) when asked to.
 const shop = createServer((req, res) => {
   if (req.method === "POST" && req.url === "/api/try-on") {
     mockCalls++;
-    req.resume();
-    req.on("end", () =>
-      setTimeout(() => res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ image: mockLook, ms: 2500 })), 2500),
-    );
+    let raw = "";
+    req.on("data", (chunk) => (raw += chunk));
+    req.on("end", () => {
+      const body = JSON.parse(raw || "{}");
+      mockRequests.push({ quality: body.quality, stream: body.stream });
+      if (!body.stream) {
+        setTimeout(() => res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ image: mockLook, ms: 2500 })), 2500);
+        return;
+      }
+      res.writeHead(200, { "Content-Type": "application/x-ndjson" });
+      setTimeout(() => res.write(JSON.stringify({ type: "partial", image: mockLook }) + "\n"), 1000);
+      setTimeout(() => res.end(JSON.stringify({ type: "done", image: mockLook, ms: 3000 }) + "\n"), 3000);
+    });
     return;
   }
   res.writeHead(200, { "Content-Type": "text/html" }).end(fixture);
@@ -122,10 +133,27 @@ try {
     await page.locator("billy-root .card .status").waitFor({ state: "visible" });
     await page.screenshot({ path: join(shots, "ext-6-generating.png") });
     check("result card shows progress", true);
-
+    // The mock always streams a preview. The real model may skip previews when a quick
+    // render finishes fast, so there it is reported rather than required.
     const started = Date.now();
+    const sawPreview = await page
+      .waitForFunction(
+        () => {
+          const ui = document.querySelector("billy-root").shadowRoot;
+          if (ui.querySelector(".status b")?.textContent === "Adding the finishing details") return "preview";
+          return !ui.querySelector(".compare").hidden && "done";
+        },
+        null,
+        { timeout: 120_000 },
+      )
+      .then((h) => h.jsonValue());
+    if (skipGenerate) check("result card shows a streamed preview before the look is done", sawPreview === "preview");
     await page.locator("billy-root .card .compare").waitFor({ state: "visible", timeout: 120_000 });
-    check(`try-on result returned from ${skipGenerate ? "the mock" : "the server"}`, true, `${((Date.now() - started) / 1000).toFixed(1)}s`);
+    check(
+      `try-on result returned from ${skipGenerate ? "the mock" : "the server"}`,
+      true,
+      `${((Date.now() - started) / 1000).toFixed(1)}s, ${sawPreview === "preview" ? "with" : "without"} a streamed preview`,
+    );
     await page.waitForTimeout(500);
     await page.screenshot({ path: join(shots, "ext-7-result.png") });
 
@@ -155,9 +183,23 @@ try {
   });
   await panel.waitForSelector("#status:not([hidden])", { timeout: 5_000 });
   await panel.screenshot({ path: join(shots, "ext-9-panel-drop-running.png") });
+  await panel.waitForSelector("#stage-img.preview", { timeout: 5_000 });
+  check("side panel shows the streamed preview", (await panel.textContent("#status-title")) === "Adding the finishing details");
   await panel.waitForSelector("#result:not([hidden])", { timeout: 15_000 });
   await panel.screenshot({ path: join(shots, "ext-10-panel-result.png") });
   check("drop into side panel runs a try-on and shows the result", mockCalls === callsBefore + 1, `${mockCalls - callsBefore} mock call`);
+  check("try-ons default to the quick render", mockRequests.at(-1)?.quality === "low" && mockRequests.at(-1)?.stream === true, JSON.stringify(mockRequests.at(-1)));
+
+  // "Render in detail" re-runs the same garment at the detailed quality.
+  await panel.click("#detail");
+  await panel.waitForSelector("#result:not([hidden])", { timeout: 15_000 });
+  await panel.waitForFunction(() => !document.getElementById("detail") || document.getElementById("detail").hidden);
+  check("Render in detail asks for the detailed quality", mockRequests.at(-1)?.quality === "medium", JSON.stringify(mockRequests.at(-1)));
+
+  // The Quick/Detailed toggle is remembered and used for the next try-on.
+  await panel.click('[data-quality="medium"]');
+  await panel.waitForFunction(async () => (await chrome.storage.local.get("quality")).quality === "medium");
+  check("quality toggle is saved", (await panel.getAttribute('[data-quality="medium"]', "aria-checked")) === "true");
 
   check("no service worker errors", workerErrors.length === 0, workerErrors.join(" | "));
 } catch (err) {

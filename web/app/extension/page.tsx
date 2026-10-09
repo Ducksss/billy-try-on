@@ -59,7 +59,7 @@ export default function ExtensionPage() {
                 <Image src="/extension/result.jpg" alt="Billy's result card showing the shirt on the shopper" width={1280} height={860} className="h-auto w-full" />
               </div>
               <figcaption className="mt-3 text-sm text-muted">
-                The look appears on the same page in about 25 seconds. Hold to compare, save it, or keep shopping.
+                The look appears on the same page in about 10 seconds. Hold to compare, save it, or keep shopping.
               </figcaption>
             </figure>
           </div>

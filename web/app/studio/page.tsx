@@ -2,12 +2,13 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Nav } from "@/components/site/Nav";
 import { Studio } from "@/components/studio/Studio";
+import { mirrorEnabled } from "@/lib/mirror";
 
 export const metadata: Metadata = { title: "Studio" };
 
 async function StudioFromParams({ searchParams }: { searchParams: PageProps<"/studio">["searchParams"] }) {
   const { item } = await searchParams;
-  return <Studio initialItem={typeof item === "string" ? item : undefined} />;
+  return <Studio initialItem={typeof item === "string" ? item : undefined} mirror={mirrorEnabled()} />;
 }
 
 export default function StudioPage({ searchParams }: PageProps<"/studio">) {

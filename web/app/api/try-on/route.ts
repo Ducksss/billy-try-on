@@ -5,7 +5,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { fetchGarmentImage } from "@/lib/tryon/fetch-garment";
 import { parseDataUrl, toDataUrl, type ImageInput } from "@/lib/tryon/image";
 import { buildTryOnPrompt, type GarmentCategory } from "@/lib/tryon/prompt";
-import { activeProvider, providers, TryOnError } from "@/lib/tryon/providers";
+import { activeProvider, providers, SHOPPER_QUALITIES, TryOnError, type Quality } from "@/lib/tryon/providers";
 
 export const maxDuration = 120;
 
@@ -14,6 +14,9 @@ const CATEGORIES = new Set<GarmentCategory>(["top", "outerwear", "dress", "botto
 
 type Body = {
   person?: unknown;
+  quality?: unknown;
+  // Ask for newline-delimited JSON: `partial` previews while rendering, then `done` or `error`.
+  stream?: unknown;
   garment?: {
     image?: unknown;
     url?: unknown;
@@ -53,30 +56,82 @@ export async function POST(request: Request) {
   const category: GarmentCategory =
     listing?.category ?? (CATEGORIES.has(g.category as GarmentCategory) ? (g.category as GarmentCategory) : "auto");
 
+  const quality = SHOPPER_QUALITIES.has(body.quality as Quality) ? (body.quality as Quality) : undefined;
   const started = Date.now();
+  let garment: ImageInput | null;
   try {
-    let garment: ImageInput | null = parseDataUrl(g.image, MAX_IMAGE_BYTES);
-    if (!garment && listing) {
-      garment = await readCatalogueImage(listing.image);
-    }
+    garment = parseDataUrl(g.image, MAX_IMAGE_BYTES);
+    if (!garment && listing) garment = await readCatalogueImage(listing.image);
     if (!garment && typeof g.url === "string") {
       garment = await fetchGarmentImage(g.url, typeof g.pageUrl === "string" ? g.pageUrl : undefined);
     }
-    if (!garment) return fail("Add a garment image, link or catalogue item.", 400);
-
-    const provider = activeProvider();
-    const result = await providers[provider]({ person, garment, prompt: buildTryOnPrompt(category, title) });
-    return Response.json({
-      image: toDataUrl(result.image),
-      provider,
-      model: result.model,
-      ms: Date.now() - started,
-    });
   } catch (err) {
-    if (err instanceof TryOnError) return fail(err.message, err.status);
-    console.error("[try-on] unexpected", err);
-    return fail("Something went wrong generating your look.", 500);
+    return errorResponse(err);
   }
+  if (!garment) return fail("Add a garment image, link or catalogue item.", 400);
+
+  const provider = activeProvider();
+  const args = { person, garment, prompt: buildTryOnPrompt(category, title), quality };
+  const finished = (result: { image: ImageInput; model: string }) => ({
+    image: toDataUrl(result.image),
+    provider,
+    model: result.model,
+    ms: Date.now() - started,
+  });
+
+  if (body.stream !== true) {
+    try {
+      return Response.json(finished(await providers[provider]({ ...args, signal: request.signal })));
+    } catch (err) {
+      return errorResponse(err);
+    }
+  }
+
+  // Cancelling the request (the shopper pressed Cancel) also cancels the upstream call.
+  const upstream = new AbortController();
+  request.signal.addEventListener("abort", () => upstream.abort());
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const send = (event: object) => {
+        if (!upstream.signal.aborted) controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));
+      };
+      try {
+        const result = await providers[provider]({
+          ...args,
+          signal: upstream.signal,
+          onPartial: (image) => send({ type: "partial", image: toDataUrl(image) }),
+        });
+        send({ type: "done", ...finished(result) });
+      } catch (err) {
+        if (!upstream.signal.aborted) {
+          const { error, status } = describeError(err);
+          send({ type: "error", error, status });
+        }
+      } finally {
+        try {
+          controller.close();
+        } catch {}
+      }
+    },
+    cancel() {
+      upstream.abort();
+    },
+  });
+  return new Response(stream, {
+    headers: { "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store, no-transform" },
+  });
+}
+
+function describeError(err: unknown) {
+  if (err instanceof TryOnError) return { error: err.message, status: err.status };
+  console.error("[try-on] unexpected", err);
+  return { error: "Something went wrong generating your look.", status: 500 };
+}
+
+function errorResponse(err: unknown) {
+  const { error, status } = describeError(err);
+  return fail(error, status);
 }
 
 // Read from disk rather than fetching our own URL, which Vercel's deployment

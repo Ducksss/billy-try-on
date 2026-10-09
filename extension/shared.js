@@ -7,6 +7,14 @@ export async function getServerUrl() {
   return (serverUrl || DEFAULT_SERVER).replace(/\/+$/, "");
 }
 
+// "low" is the quick render (about 10s), "medium" the detailed one (about 25s).
+export const QUALITY_SECONDS = { low: 10, medium: 25 };
+
+export async function getQuality() {
+  const { quality } = await chrome.storage.local.get("quality");
+  return quality === "medium" ? "medium" : "low";
+}
+
 export async function getMe() {
   const { me } = await chrome.storage.local.get("me");
   return me ?? null;

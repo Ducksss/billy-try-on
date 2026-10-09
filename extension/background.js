@@ -1,4 +1,4 @@
-import { addLook, blobToJpegDataUrl, dataUrlToBlob, getMe, getServerUrl } from "./shared.js";
+import { addLook, blobToJpegDataUrl, dataUrlToBlob, getMe, getQuality, getServerUrl } from "./shared.js";
 
 chrome.runtime.onInstalled.addListener(async () => {
   chrome.contextMenus.create({ id: "billy-try-on", title: "Try on with Billy", contexts: ["image"] });
@@ -27,7 +27,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const handlers = {
     "billy:me": async () => ({ me: await getMe() }),
-    "billy:tryon": () => tryOn(message.garment),
+    "billy:tryon": () => tryOn(message.garment, { jobId: message.jobId, quality: message.quality, tabId: sender.tab?.id }),
     "billy:save-look": () => saveLook(message),
     "billy:open-panel": async () => {
       await chrome.sidePanel.open({ tabId: sender.tab.id });
@@ -54,16 +54,45 @@ async function garmentImage(garment) {
   }
 }
 
-async function tryOn(garment) {
+// Rough previews stream back while the look renders. They go to whichever surface asked:
+// the page's content script, or the side panel (an extension page).
+function notify(tabId, message) {
+  const sent = tabId ? chrome.tabs.sendMessage(tabId, message) : chrome.runtime.sendMessage(message);
+  sent?.catch?.(() => {});
+}
+
+async function readTryOnStream(res, onPartial) {
+  const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+  let buffer = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += value;
+    let end;
+    while ((end = buffer.indexOf("\n")) >= 0) {
+      const line = buffer.slice(0, end).trim();
+      buffer = buffer.slice(end + 1);
+      if (!line) continue;
+      const event = JSON.parse(line);
+      if (event.type === "partial") onPartial(event.image);
+      else if (event.type === "done" || event.type === "error") return event;
+    }
+  }
+  return { error: "The connection closed before your look was ready. Try again." };
+}
+
+async function tryOn(garment, { jobId, quality, tabId } = {}) {
   const person = await getMe();
   if (!person) return { error: "no-photo" };
   const server = await getServerUrl();
-  // A try-on takes ~25s; keep the service worker from idling out mid-request.
+  // A try-on takes 10-25s; keep the service worker from idling out mid-request.
   const keepAlive = setInterval(() => chrome.runtime.getPlatformInfo(), 20_000);
   try {
     const image = await garmentImage(garment);
     const body = {
       person,
+      quality: quality ?? (await getQuality()),
+      stream: true,
       garment: {
         image: image ?? undefined,
         url: image ? undefined : garment.url,
@@ -83,9 +112,18 @@ async function tryOn(garment) {
     } catch {
       return { error: `Can't reach Billy's server at ${server}. Start it, or change the address in Billy's settings.` };
     }
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) return { error: json.error || `Billy's server returned ${res.status}.` };
-    return { image: json.image, ms: json.ms, garmentImage: image };
+    // Servers that predate streaming answer with plain JSON.
+    let json;
+    if (res.ok && res.headers.get("content-type")?.includes("ndjson")) {
+      json = await readTryOnStream(res, (preview) => notify(tabId, { type: "billy:partial", jobId, image: preview })).catch(() => ({
+        error: "The connection to Billy's server dropped. Try again.",
+      }));
+    } else {
+      json = await res.json().catch(() => ({}));
+      if (!res.ok) return { error: json.error || `Billy's server returned ${res.status}.` };
+    }
+    if (json.error || !json.image) return { error: json.error || "Try-on failed." };
+    return { image: json.image, ms: json.ms, quality: body.quality, garmentImage: image };
   } finally {
     clearInterval(keepAlive);
   }
