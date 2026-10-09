@@ -1,4 +1,4 @@
-// Renders showcase looks for the landing page through the running app's own
+// Renders showcase looks for the landing page and demo shop through the running app's own
 // /api/try-on endpoint. Usage: node scripts/generate-looks.mjs [baseUrl]
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -14,6 +14,11 @@ const looks = [
   ["arjun", "olive-overshirt"],
   ["arjun", "rust-cord-shirt"],
   ["arjun", "linen-camp-shirt"],
+  // The demo shop shows every product on a model.
+  ["mei", "breton-tee"],
+  ["mei", "sage-slip-dress"],
+  ["arjun", "charcoal-trousers"],
+  ["arjun", "grey-sweatshirt"],
 ];
 
 await Promise.all(

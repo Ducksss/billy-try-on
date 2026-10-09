@@ -63,6 +63,10 @@ export default function Home() {
                 Add to Chrome
               </Link>
             </div>
+            <Link href="/shop" className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium underline-offset-4 hover:underline">
+              Or see Billy inside a fashion store
+              <ArrowRight size={14} weight="bold" />
+            </Link>
           </div>
           <HeroTryOn />
         </section>
@@ -224,10 +228,15 @@ export default function Home() {
                 </span>
               </p>
             </div>
-            <Link href="/listing/olive-overshirt" className="btn btn-ink mt-12">
-              See a listing page
-              <ArrowRight size={16} weight="bold" />
-            </Link>
+            <div className="mt-12 flex flex-wrap gap-3">
+              <Link href="/shop" className="btn btn-ink">
+                See Billy inside a store
+                <ArrowRight size={16} weight="bold" />
+              </Link>
+              <Link href="/listing/olive-overshirt" className="btn btn-ghost">
+                See a listing page
+              </Link>
+            </div>
           </div>
         </section>
       </main>

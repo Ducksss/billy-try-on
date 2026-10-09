@@ -56,6 +56,17 @@ Switch with `BILLY_TRYON_PROVIDER`. The server applies a per-IP hourly limit (`B
 
 `gpt-image-2.5-flare` is also available on the key. One quick render took 8.6s with comparable quality but sent no preview; try it with `BILLY_OPENAI_MODEL` before switching.
 
+## Demo store
+
+`/shop` is ÉTAGE, a fictional fashion store (pre-owned and last-season stock) that shows Billy the way a retailer would embed it, so people can see the product without installing anything. It is styled like a minimal fashion retailer: black on white, square corners, a Bodoni Moda wordmark and Archivo Narrow captions. Billy's orange button and drawer are the only colour on the page.
+
+- Every product card and product page has **Try on**. It opens Billy's drawer, which asks for a photo once (or borrows Mei or Arjun), renders the look with streamed previews, and hands **Add to bag** back to the store.
+- **Wear it with** in the drawer layers a matching piece over the look, using the same Keep it on logic as the studio.
+- Once a piece has been tried on, its card shows the shopper's own look marked **On you**, and its product page opens on **You** with a switch back to the model. These looks are kept in the browser's IndexedDB with the shopper's photo, which is shared with the studio.
+- The bag works (kept in localStorage); checkout is switched off.
+- Products come from `web/lib/catalogue.ts` through `web/lib/shop.ts`, so try-ons use the catalogue's listing ids. Every product has an on-model photo in `web/public/looks/`.
+- The Chrome extension also works on these pages, since the product photos are ordinary images.
+
 ## Live mirror
 
 `/mirror` streams the shopper's camera to Decart's realtime try-on model (`lucy-vton-latest`, through `@decartai/sdk`) and plays back video of them wearing the garment. They can switch garments without reconnecting, record a 6-second clip to share or download, or save a still to their looks.
@@ -72,14 +83,14 @@ From the repo root:
 | Command | What it does |
 | --- | --- |
 | `npm run assets` | Generates the 12 catalogue garments and 2 example models with `gpt-image-2` (skips existing files) |
-| `npm run looks` | Renders the 8 landing-page looks through the running app's own `/api/try-on` |
+| `npm run looks` | Renders the 12 showcase looks (landing page and demo store) through the running app's own `/api/try-on`, skipping existing files |
 | `npm run pack:extension` | Rebuilds `web/public/billy-extension.zip` pointing at production. Run it after changing `extension/` |
 | `npm run pack:extension:local` | Same, but the zip defaults to `http://localhost:3000` |
 | `npm run test:extension` | Loads the extension in Playwright's Chromium against a mock shop page and checks 17 behaviours (18 with the mock), including one real try-on, streamed previews, the quality toggle and Render in detail. Needs `npm run dev`; `BILLY_SERVER=http://localhost:3100` points it at another port. Add `-- --skip-generate` to skip the paid call |
 
 ## Demo data
 
-All garment photos, the two models (Mei and Arjun) and every look on the site are AI-generated. Sellers, prices and listings are fictional and are labelled as demo data on the listing pages and in the footer.
+All garment photos, the two models (Mei and Arjun) and every look on the site are AI-generated. Sellers, prices and listings are fictional and are labelled as demo data on the listing pages and in the footer. ÉTAGE is a made-up brand; the store says so in a banner on every page and in its footer.
 
 ## Known limits
 

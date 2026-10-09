@@ -42,6 +42,8 @@
   --color-accent-soft: var(--accent-soft);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-bodoni);
+  --font-narrow: var(--font-archivo-narrow);
   --shadow-lift: var(--shadow);
 }
 
@@ -156,4 +158,44 @@ body {
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* ÉTAGE demo store: black on white with square corners. Billy's tokens are pinned to
+   their light values here so the embedded try-on reads as Billy's widget, and its
+   orange stays the only colour on the page. */
+.shop-root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f1f1ef;
+  --ink: #111111;
+  --muted: #6b6b6b;
+  --line: #e3e3e0;
+  --accent: #c2401f;
+  --accent-ink: #ffffff;
+  --accent-soft: #f6e3dc;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 24px 48px -16px rgb(0 0 0 / 0.25);
+  background: #ffffff;
+  color: #111111;
+}
+body:has(.shop-root) {
+  background: #ffffff;
+}
+.shop-root ::selection {
+  background: #111111;
+  color: #ffffff;
+}
+.shop-caps {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+@keyframes shop-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes shop-slide {
+  from {
+    transform: translateX(100%);
+  }
 }

@@ -15,6 +15,7 @@ export function Logo() {
 const links = [
   { href: "/discover", label: "Pre-loved feed" },
   { href: "/studio", label: "Studio" },
+  { href: "/shop", label: "Demo store" },
   { href: "/#sellers", label: "For sellers" },
 ];
 
@@ -53,6 +54,7 @@ export function Footer() {
         <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
           <Link href="/discover" className="hover:text-ink">Pre-loved feed</Link>
           <Link href="/studio" className="hover:text-ink">Studio</Link>
+          <Link href="/shop" className="hover:text-ink">Demo store</Link>
           <Link href="/extension" className="hover:text-ink">Chrome extension</Link>
         </div>
       </div>
