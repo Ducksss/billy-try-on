@@ -113,6 +113,10 @@ body {
   padding: 0.45rem 0.85rem;
   font-size: 0.8125rem;
 }
+/* Icon-only buttons: square-ish padding. */
+.btn-icon {
+  padding-inline: 0.6rem;
+}
 
 /* Scanning band shown over the photo while a look is generating. */
 @keyframes billy-scan {
@@ -133,6 +137,13 @@ body {
   );
   animation: billy-scan 2.2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
+/* Streaming previews fade in over the photo as they arrive. */
+@keyframes billy-fade {
+  from {
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .scan-band {
     animation: none;

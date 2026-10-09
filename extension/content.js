@@ -41,6 +41,8 @@
       .icon:hover { background: var(--surface); color: var(--ink); }
       .card .frame { position: relative; margin: 0 10px; aspect-ratio: 3/4; max-height: calc(100vh - 240px); border-radius: 14px; overflow: hidden; background: var(--surface); }
       .card .frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+      .card .frame img.preview { animation: fade .6s ease-out; }
+      @keyframes fade { from { opacity: .3; } }
       .scan { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent, color-mix(in oklab, var(--accent) 25%, transparent) 70%,
         color-mix(in oklab, var(--accent) 60%, transparent) 98%, transparent); animation: scan 2.2s cubic-bezier(.45,0,.55,1) infinite; }
       @keyframes scan { from { transform: translateY(-100%); } to { transform: translateY(100%); } }
@@ -273,8 +275,8 @@
 
   async function start(garment) {
     if (!alive()) return;
-    const id = Symbol("job");
-    job = { id, garment, result: null };
+    const id = Math.random().toString(36).slice(2);
+    job = { id, garment, result: null, preview: false };
     clearInterval(tick);
     pill.hidden = true;
     card.hidden = false;
@@ -296,16 +298,20 @@
       return;
     }
     ui.base.src = me;
+    ui.base.classList.remove("preview");
     ui.scan.hidden = false;
+    const { quality } = await chrome.storage.local.get("quality").catch(() => ({}));
+    const expected = quality === "medium" ? 25 : 10;
     const started = Date.now();
     const render = () => {
       const s = Math.round((Date.now() - started) / 1000);
-      setStatus("Fitting it on you", `${s}s · ${s < 30 ? "usually about 25s" : "almost there"}`);
+      const title = job?.preview ? "Adding the finishing details" : "Fitting it on you";
+      setStatus(title, `${s}s · ${s <= expected + 5 ? `usually about ${expected}s` : "almost there"}`);
     };
     render();
     tick = setInterval(render, 500);
 
-    const res = await send({ type: "billy:tryon", garment }).catch((err) => ({ error: err.message }));
+    const res = await send({ type: "billy:tryon", garment, jobId: id }).catch((err) => ({ error: err.message }));
     if (job?.id !== id) return;
     clearInterval(tick);
     ui.scan.hidden = true;
@@ -316,6 +322,7 @@
     }
     job.result = res;
     ui.before.src = me;
+    ui.base.classList.remove("preview");
     ui.base.src = res.image;
     ui.compare.hidden = false;
     ui.save.disabled = false;
@@ -363,6 +370,12 @@
 
   function onMessage(message) {
     if (message?.type === "billy:start" && message.garment) start(message.garment);
+    // A rough preview of the look while it renders.
+    if (message?.type === "billy:partial" && job && message.jobId === job.id && !job.result) {
+      job.preview = true;
+      ui.base.classList.add("preview");
+      ui.base.src = message.image;
+    }
   }
 
   document.addEventListener("mousemove", onMove, { passive: true, capture: true });

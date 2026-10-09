@@ -31,8 +31,8 @@ const steps = [
     alt: "90s colour-block windbreaker product photo",
   },
   {
-    title: "Save looks and compare",
-    body: "Keep the ones you like, put two side by side, and decide before you message the seller or check out.",
+    title: "Build the outfit, then compare",
+    body: "Keep a piece on and layer a jacket over it. Save the looks you like, put two side by side, and decide before you message the seller or check out.",
     image: "/looks/arjun-windbreaker-90s.jpg",
     alt: "Arjun wearing the windbreaker",
   },

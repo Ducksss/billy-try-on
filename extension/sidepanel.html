@@ -59,6 +59,7 @@
               <button id="save" class="btn primary">Save look</button>
               <a id="open-item" class="btn" target="_blank" rel="noreferrer">View item</a>
             </div>
+            <button id="detail" class="btn small" hidden>Render in detail · about 25s</button>
             <div class="row verdict" role="group" aria-label="Would you buy it?">
               <span class="muted small">Would you buy it?</span>
               <div class="seg">
@@ -73,6 +74,15 @@
             <div><p>Your photo</p><p class="muted small">Saved in this browser</p></div>
             <button class="btn small" data-action="upload-photo">Change</button>
           </div>
+          <div class="quality-row">
+            <div><p>Render</p><p id="quality-hint" class="muted small"></p></div>
+            <div class="seg" role="radiogroup" aria-label="Render quality">
+              <button role="radio" data-quality="low">Quick ~10s</button><button role="radio" data-quality="medium">Detailed ~25s</button>
+            </div>
+          </div>
+          <a id="mirror-link" class="mirror-link" target="_blank" rel="noreferrer" hidden>
+            <b>Try it live with your camera</b><span class="muted small">Opens Billy's live mirror in a new tab</span>
+          </a>
         </div>
       </section>
 

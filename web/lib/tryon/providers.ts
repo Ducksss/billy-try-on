@@ -9,7 +9,20 @@ export class TryOnError extends Error {
   }
 }
 
-type ProviderArgs = { person: ImageInput; garment: ImageInput; prompt: string };
+// "low" renders in about 10s, "medium" in about 25s. Shoppers pick between the two;
+// "high" is only reachable through BILLY_OPENAI_QUALITY.
+export type Quality = "low" | "medium" | "high";
+export const SHOPPER_QUALITIES = new Set<Quality>(["low", "medium"]);
+
+type ProviderArgs = {
+  person: ImageInput;
+  garment: ImageInput;
+  prompt: string;
+  quality?: Quality;
+  // Called with rough previews while the final image renders, when the provider can stream.
+  onPartial?: (image: ImageInput) => void;
+  signal?: AbortSignal;
+};
 type ProviderResult = { image: ImageInput; model: string };
 
 function upstreamError(status: number, detail: string): TryOnError {
@@ -24,7 +37,14 @@ function upstreamError(status: number, detail: string): TryOnError {
   return new TryOnError(`Try-on failed upstream (${status}).`, 502);
 }
 
-async function openai({ person, garment, prompt }: ProviderArgs): Promise<ProviderResult> {
+export function defaultQuality(): Quality {
+  const q = process.env.BILLY_OPENAI_QUALITY as Quality;
+  return ["low", "medium", "high"].includes(q) ? q : "medium";
+}
+
+const jpeg = (b64: string): ImageInput => ({ buffer: Buffer.from(b64, "base64"), mimeType: "image/jpeg" });
+
+async function openai({ person, garment, prompt, quality, onPartial, signal }: ProviderArgs): Promise<ProviderResult> {
   const key = process.env.OPENAI_API_KEY;
   if (!key) throw new TryOnError("OPENAI_API_KEY is not set on the server.", 500);
   const model = process.env.BILLY_OPENAI_MODEL || "gpt-image-2";
@@ -32,28 +52,69 @@ async function openai({ person, garment, prompt }: ProviderArgs): Promise<Provid
   form.set("model", model);
   form.set("prompt", prompt);
   form.set("size", openAiSize(imageSize(person.buffer)));
-  form.set("quality", process.env.BILLY_OPENAI_QUALITY || "medium");
+  form.set("quality", quality ?? defaultQuality());
   form.set("output_format", "jpeg");
+  if (onPartial) {
+    form.set("stream", "true");
+    form.set("partial_images", "2");
+  }
   form.append("image[]", new Blob([new Uint8Array(person.buffer)], { type: person.mimeType }), "person");
   form.append("image[]", new Blob([new Uint8Array(garment.buffer)], { type: garment.mimeType }), "garment");
 
+  const timeout = AbortSignal.timeout(110_000);
   const res = await fetch("https://api.openai.com/v1/images/edits", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}` },
     body: form,
-    signal: AbortSignal.timeout(110_000),
+    signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
   });
-  const json = await res.json().catch(() => ({}));
   if (!res.ok) {
+    const json = await res.json().catch(() => ({}));
     console.error("[try-on] openai", res.status, json?.error?.message);
     throw upstreamError(res.status, json?.error?.message ?? "");
   }
+  if (onPartial && res.headers.get("content-type")?.includes("text/event-stream")) {
+    return { image: jpeg(await readOpenAiStream(res, (b64) => onPartial(jpeg(b64)))), model };
+  }
+  const json = await res.json().catch(() => ({}));
   const b64 = json?.data?.[0]?.b64_json;
   if (!b64) throw new TryOnError("The image model returned no image.", 502);
-  return { image: { buffer: Buffer.from(b64, "base64"), mimeType: "image/jpeg" }, model };
+  return { image: jpeg(b64), model };
 }
 
-async function gemini({ person, garment, prompt }: ProviderArgs): Promise<ProviderResult> {
+// OpenAI streams server-sent events: `image_edit.partial_image` previews, then
+// `image_edit.completed` with the final image. Returns the final image's base64.
+async function readOpenAiStream(res: Response, onPartial: (b64: string) => void): Promise<string> {
+  const reader = res.body!.pipeThrough(new TextDecoderStream()).getReader();
+  let buffer = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += value.replace(/\r\n/g, "\n");
+    let end: number;
+    while ((end = buffer.indexOf("\n\n")) >= 0) {
+      const data = buffer
+        .slice(0, end)
+        .split("\n")
+        .filter((line) => line.startsWith("data:"))
+        .map((line) => line.slice(5).trimStart())
+        .join("\n");
+      buffer = buffer.slice(end + 2);
+      if (!data || data === "[DONE]") continue;
+      const event = JSON.parse(data);
+      if (event.type?.endsWith(".partial_image") && event.b64_json) onPartial(event.b64_json);
+      else if (event.type?.endsWith(".completed") && event.b64_json) return event.b64_json;
+      else if (event.type === "error" || event.error) {
+        const message = event.error?.message ?? event.message ?? "";
+        console.error("[try-on] openai stream", message);
+        throw upstreamError(502, message);
+      }
+    }
+  }
+  throw new TryOnError("The image model returned no image.", 502);
+}
+
+async function gemini({ person, garment, prompt, signal }: ProviderArgs): Promise<ProviderResult> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new TryOnError("GEMINI_API_KEY is not set on the server.", 500);
   const model = process.env.BILLY_GEMINI_MODEL || "gemini-3.1-flash-image";
@@ -76,7 +137,7 @@ async function gemini({ person, garment, prompt }: ProviderArgs): Promise<Provid
         imageConfig: { aspectRatio: geminiAspectRatio(imageSize(person.buffer)) },
       },
     }),
-    signal: AbortSignal.timeout(110_000),
+    signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(110_000)]) : AbortSignal.timeout(110_000),
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {

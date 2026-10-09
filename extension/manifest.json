@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Billy: virtual try-on",
   "short_name": "Billy",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Drag any clothing photo onto yourself and see how it looks before you buy. Pre-loved and surplus first.",
   "minimum_chrome_version": "116",
   "permissions": [

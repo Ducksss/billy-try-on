@@ -122,7 +122,7 @@ export function HeroTryOn() {
           ) : (
             <p>{scanning ? "Fitting it on..." : `Drag a garment onto ${people[person].name}, or tap one.`}</p>
           )}
-          <p className="text-muted">Pre-rendered examples on AI-generated models. A live try-on takes about 25 seconds.</p>
+          <p className="text-muted">Pre-rendered examples on AI-generated models. A live try-on takes about 10 seconds.</p>
         </div>
       </div>
 

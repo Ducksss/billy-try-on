@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Info } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight, Info, VideoCamera } from "@phosphor-icons/react/dist/ssr";
 import { Footer, Nav } from "@/components/site/Nav";
 import { catalogue, formatPrice, getListing } from "@/lib/catalogue";
+import { mirrorEnabled } from "@/lib/mirror";
 
 export function generateStaticParams() {
   return catalogue.map((item) => ({ id: item.id }));
@@ -73,6 +74,12 @@ export default async function ListingPage({ params }: PageProps<"/listing/[id]">
               Try it on
               <ArrowRight size={16} weight="bold" />
             </Link>
+            {mirrorEnabled() && (
+              <Link href={`/mirror?item=${listing.id}`} className="btn btn-ghost">
+                <VideoCamera size={16} weight="bold" />
+                Try it live
+              </Link>
+            )}
           </div>
 
           <p className="mt-8 flex max-w-[52ch] gap-2.5 rounded-2xl bg-surface-2 p-4 text-sm leading-relaxed text-muted">
