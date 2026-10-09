@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta property="og:title" content="Rust corduroy shirt, size L" />
+    <title>Rust corduroy shirt | Test resale shop</title>
+    <style>
+      body { margin: 0; font-family: Georgia, serif; background: #fff; color: #222; }
+      header { padding: 16px 32px; border-bottom: 1px solid #ddd; font-size: 20px; }
+      main { display: grid; grid-template-columns: 480px 1fr; gap: 40px; padding: 32px; }
+      .gallery { position: relative; }
+      .gallery img { width: 480px; height: 640px; object-fit: cover; display: block; }
+      /* Many shops lay a transparent link or zoom layer over the product photo. */
+      .gallery .overlay { position: absolute; inset: 0; }
+      .thumbs { display: flex; gap: 8px; margin-top: 8px; }
+      .thumbs img { width: 64px; height: 64px; object-fit: cover; }
+      button { padding: 12px 24px; font-size: 16px; }
+    </style>
+  </head>
+  <body>
+    <header>Test resale shop (fixture for Billy's extension tests)</header>
+    <main>
+      <div class="gallery">
+        <a href="#zoom">
+          <img
+            id="product"
+            alt="Rust corduroy shirt"
+            src="http://localhost:3000/catalogue/rust-cord-shirt.jpg"
+            srcset="http://localhost:3000/catalogue/rust-cord-shirt.jpg 675w"
+          />
+        </a>
+        <div class="overlay"></div>
+        <div class="thumbs"><img src="http://localhost:3000/catalogue/rust-cord-shirt.jpg" alt="" /></div>
+      </div>
+      <div>
+        <h1>Rust corduroy shirt</h1>
+        <p>S$24 · Size L · Pre-loved</p>
+        <button>Add to cart</button>
+      </div>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Billy</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="logo">
+        <span><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M244,168,148,96l19.2-14.4A12,12,0,0,0,172,72a44,44,0,0,0-87.66-5.48,12,12,0,1,0,23.82,3,20,20,0,0,1,39.09-2.92L121,86.24c-.15.1-.29.21-.43.32L12,168a20,20,0,0,0,12,36H232a20,20,0,0,0,12-36ZM36,180l92-69,92,69Z"/></svg></span>
+        billy
+      </div>
+      <nav class="tabs" role="tablist" aria-label="Billy">
+        <button role="tab" data-view="try" aria-selected="true">Try on</button>
+        <button role="tab" data-view="looks" aria-selected="false">Looks <span id="looks-count"></span></button>
+        <button role="tab" data-view="feed" aria-selected="false">Feed</button>
+        <button role="tab" data-view="settings" aria-selected="false" aria-label="Settings" class="gear">
+          <svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M128,76a52,52,0,1,0,52,52A52.06,52.06,0,0,0,128,76Zm0,80a28,28,0,1,1,28-28A28,28,0,0,1,128,156Zm92-27.21v-1.58l14-17.51a12,12,0,0,0,2.23-10.59A111.75,111.75,0,0,0,225,71.89,12,12,0,0,0,215.89,66L193.61,63.5l-1.11-1.11L190,40.1A12,12,0,0,0,184.11,31a111.67,111.67,0,0,0-27.23-11.27A12,12,0,0,0,146.3,22L128.79,36h-1.58L109.7,22a12,12,0,0,0-10.59-2.23A111.75,111.75,0,0,0,71.89,31.05,12,12,0,0,0,66,40.11L63.5,62.39,62.39,63.5,40.1,66A12,12,0,0,0,31,71.89,111.67,111.67,0,0,0,19.77,99.12,12,12,0,0,0,22,109.7l14,17.51v1.58L22,146.3a12,12,0,0,0-2.23,10.59,111.75,111.75,0,0,0,11.29,27.22A12,12,0,0,0,40.11,190l22.28,2.48,1.11,1.11L66,215.9A12,12,0,0,0,71.89,225a111.67,111.67,0,0,0,27.23,11.27A12,12,0,0,0,109.7,234l17.51-14h1.58l17.51,14a12,12,0,0,0,10.59,2.23A111.75,111.75,0,0,0,184.11,225a12,12,0,0,0,5.91-9.06l2.48-22.28,1.11-1.11L215.9,190a12,12,0,0,0,9.06-5.91,111.67,111.67,0,0,0,11.27-27.23A12,12,0,0,0,234,146.3Zm-24.12-4.89a70.1,70.1,0,0,1,0,8.2,12,12,0,0,0,2.61,8.22l12.84,16.05A86.47,86.47,0,0,1,207,166.86l-20.43,2.27a12,12,0,0,0-7.65,4,69,69,0,0,1-5.8,5.8,12,12,0,0,0-4,7.65L166.86,207a86.47,86.47,0,0,1-10.49,4.35l-16.05-12.85a12,12,0,0,0-7.5-2.62c-.24,0-.48,0-.72,0a70.1,70.1,0,0,1-8.2,0,12.06,12.06,0,0,0-8.22,2.6L99.63,211.33A86.47,86.47,0,0,1,89.14,207l-2.27-20.43a12,12,0,0,0-4-7.65,69,69,0,0,1-5.8-5.8,12,12,0,0,0-7.65-4L49,166.86a86.47,86.47,0,0,1-4.35-10.49l12.84-16.05a12,12,0,0,0,2.61-8.22,70.1,70.1,0,0,1,0-8.2,12,12,0,0,0-2.61-8.22L44.67,99.63A86.47,86.47,0,0,1,49,89.14l20.43-2.27a12,12,0,0,0,7.65-4,69,69,0,0,1,5.8-5.8,12,12,0,0,0,4-7.65L89.14,49a86.47,86.47,0,0,1,10.49-4.35l16.05,12.85a12.06,12.06,0,0,0,8.22,2.6,70.1,70.1,0,0,1,8.2,0,12,12,0,0,0,8.22-2.6l16.05-12.85A86.47,86.47,0,0,1,166.86,49l2.27,20.43a12,12,0,0,0,4,7.65,69,69,0,0,1,5.8,5.8,12,12,0,0,0,7.65,4L207,89.14a86.47,86.47,0,0,1,4.35,10.49l-12.84,16.05A12,12,0,0,0,195.88,123.9Z"/></svg>
+        </button>
+      </nav>
+    </header>
+
+    <main>
+      <section id="view-try" class="view">
+        <div id="onboard" class="onboard" hidden>
+          <h1>Start with a photo of you</h1>
+          <p class="muted">Full length, facing the camera, in fitted clothes. It is stored in this browser and only sent to Billy's server when you run a try-on.</p>
+          <button class="btn primary" data-action="upload-photo">Upload photo</button>
+          <p class="muted small">Or borrow an AI-generated model</p>
+          <div class="models">
+            <button data-model="mei"><img alt="" data-model-img="mei" /><span>Mei</span></button>
+            <button data-model="arjun"><img alt="" data-model-img="arjun" /><span>Arjun</span></button>
+          </div>
+        </div>
+
+        <div id="studio" hidden>
+          <div id="stage" class="stage" aria-label="Your photo. Drop a garment image here to try it on.">
+            <img id="stage-img" alt="Your photo" />
+            <img id="stage-before" alt="" hidden />
+            <div id="scan" class="scan" hidden></div>
+            <div id="drop-hint" class="drop-hint" hidden><span>Drop to try it on</span></div>
+            <button id="hold" class="hold" hidden>Hold to compare</button>
+            <div id="status" class="status" role="status" hidden>
+              <b id="status-title"></b><span id="status-sub" class="muted"></span>
+              <button id="cancel" class="btn small">Cancel</button>
+            </div>
+          </div>
+
+          <p id="error" class="error" role="alert" hidden></p>
+
+          <div id="result" class="result" hidden>
+            <div class="meta">
+              <img id="result-thumb" alt="" />
+              <div><p id="result-title"></p><p id="result-sub" class="muted"></p></div>
+            </div>
+            <div class="row">
+              <button id="save" class="btn primary">Save look</button>
+              <a id="open-item" class="btn" target="_blank" rel="noreferrer">View item</a>
+            </div>
+            <div class="row verdict" role="group" aria-label="Would you buy it?">
+              <span class="muted small">Would you buy it?</span>
+              <div class="seg">
+                <button data-verdict="yes">Yes</button><button data-verdict="maybe">Maybe</button><button data-verdict="no">No</button>
+              </div>
+            </div>
+          </div>
+
+          <p id="tip" class="tip muted">Drag any product photo from the page onto your photo, or hover a photo on the page and press <b>Try on</b>.</p>
+          <div class="me-row">
+            <img id="me-thumb" alt="" />
+            <div><p>Your photo</p><p class="muted small">Saved in this browser</p></div>
+            <button class="btn small" data-action="upload-photo">Change</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-looks" class="view" hidden>
+        <div class="looks-head">
+          <p id="looks-summary" class="muted small"></p>
+          <button id="compare" class="btn small ink" hidden disabled>Compare</button>
+        </div>
+        <ul id="looks" class="looks"></ul>
+        <div id="looks-empty" class="empty" hidden>
+          <p><b>No saved looks yet.</b></p>
+          <p class="muted small">Save a try-on and it lands here. Save two to compare them side by side.</p>
+        </div>
+      </section>
+
+      <section id="view-feed" class="view" hidden>
+        <p class="muted small">Pre-loved pieces and surplus stock you can try on right away.</p>
+        <ul id="feed" class="feed"></ul>
+        <p id="feed-error" class="error" hidden></p>
+      </section>
+
+      <section id="view-settings" class="view" hidden>
+        <form id="server-form" class="field">
+          <label for="server">Billy server</label>
+          <div class="row">
+            <input id="server" type="url" required spellcheck="false" />
+            <button class="btn small ink" type="submit">Save</button>
+          </div>
+          <p class="muted small">Where try-ons run. Use <code>http://localhost:3000</code> while the web app runs locally.</p>
+        </form>
+        <div class="field">
+          <p class="label">Your photo</p>
+          <div class="row">
+            <button class="btn small" data-action="upload-photo">Replace photo</button>
+            <button class="btn small" data-action="remove-photo">Remove photo</button>
+          </div>
+        </div>
+        <div class="field">
+          <p class="label">Saved looks</p>
+          <button class="btn small" data-action="clear-looks">Delete all saved looks</button>
+        </div>
+      </section>
+    </main>
+
+    <div id="compare-sheet" class="sheet" role="dialog" aria-modal="true" aria-label="Compare looks" hidden>
+      <div class="sheet-head"><b>Side by side</b><button class="btn small" id="close-compare">Close</button></div>
+      <div id="compare-body" class="compare-body"></div>
+    </div>
+
+    <input id="photo-input" type="file" accept="image/*" hidden />
+    <script type="module" src="sidepanel.js"></script>
+  </body>
+</html>

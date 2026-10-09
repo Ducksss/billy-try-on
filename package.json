@@ -1,0 +1,15 @@
+{
+  "name": "billy",
+  "private": true,
+  "description": "Billy: virtual try-on Chrome extension and web app for pre-loved and surplus clothing.",
+  "scripts": {
+    "dev": "npm --prefix web run dev",
+    "assets": "node scripts/generate-assets.mjs",
+    "looks": "node scripts/generate-looks.mjs",
+    "pack:extension": "node scripts/pack-extension.mjs",
+    "test:extension": "node tests/extension.e2e.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}

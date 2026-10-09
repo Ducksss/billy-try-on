@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+/* Shape rule: interactive controls are full pills, image frames and panels are 20px,
+   thumbnails and inputs are 12px. */
+:root {
+  --bg: #f3f3f1;
+  --surface: #fafaf8;
+  --surface-2: #e9e9e5;
+  --ink: #141413;
+  --muted: #5f5f5a;
+  --line: #dcdcd7;
+  --accent: #c2401f;
+  --accent-ink: #fafaf8;
+  --accent-soft: #f6e3dc;
+  --shadow: 0 1px 2px rgb(40 30 20 / 0.06), 0 12px 32px -12px rgb(40 30 20 / 0.18);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111110;
+    --surface: #1a1a18;
+    --surface-2: #252522;
+    --ink: #ededea;
+    --muted: #a1a19b;
+    --line: #2f2f2c;
+    --accent: #ff6b47;
+    --accent-ink: #141413;
+    --accent-soft: #3a1d14;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -12px rgb(0 0 0 / 0.6);
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --shadow-lift: var(--shadow);
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  border-radius: 999px;
+  padding: 0.7rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  transition:
+    transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.2s,
+    border-color 0.2s;
+}
+.btn:active {
+  transform: scale(0.98);
+}
+.btn:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.btn-primary:hover {
+  background: color-mix(in oklab, var(--accent) 88%, var(--ink));
+}
+.btn-ink {
+  background: var(--ink);
+  color: var(--bg);
+}
+.btn-ink:hover {
+  background: color-mix(in oklab, var(--ink) 85%, var(--bg));
+}
+.btn-ghost {
+  border: 1px solid var(--line);
+  color: var(--ink);
+  background: var(--surface);
+}
+.btn-ghost:hover {
+  border-color: color-mix(in oklab, var(--line) 50%, var(--ink));
+}
+.btn-sm {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8125rem;
+}
+
+/* Scanning band shown over the photo while a look is generating. */
+@keyframes billy-scan {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+.scan-band {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in oklab, var(--accent) 22%, transparent) 70%,
+    color-mix(in oklab, var(--accent) 55%, transparent) 98%,
+    transparent 100%
+  );
+  animation: billy-scan 2.2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .scan-band {
+    animation: none;
+    opacity: 0.4;
+  }
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
