@@ -5,3 +5,4 @@ tests/screenshots/mock/
 .vercel
 .env*
 !.env.example
+.claude/launch.json
