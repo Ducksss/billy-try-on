@@ -1,114 +1,226 @@
-# Billy
+<a id="readme-top"></a>
 
-Billy is a virtual try-on Chrome extension for pre-loved and surplus clothing. A shopper adds one photo of themselves, then drags a garment photo from any shop or resale listing onto it, and Billy generates a picture of them wearing it. A quick render takes about 10 seconds and the look sharpens on screen as it renders. Pieces can be kept on and layered into an outfit, and looks can be saved, rated ("Would you buy it?"), shared and compared side by side before buying. It was built for SDG 12 (Challenge Statement 2) and modelled on [Anywear](https://anywear.decart.ai/), which does live-camera try-on with Decart's realtime model. Billy works from a photo, so it runs on any image API and any laptop; an optional live mirror (`/mirror`) adds the camera version when a Decart key is set.
+<div align="center">
+  <a href="https://billy-try-on.vercel.app">
+    <img src="web/app/icon.svg" alt="Billy coat hanger logo" width="72" height="72">
+  </a>
+  <h1>Billy</h1>
+  <p>Virtual try-on for pre-loved and surplus clothing.</p>
+  <p>
+    <a href="https://billy-try-on.vercel.app/studio"><strong>Try the Studio</strong></a>
+    · <a href="https://billy-try-on.vercel.app/extension">Add to Chrome</a>
+    · <a href="docs/DEVELOPMENT.md">Explore the docs</a>
+    · <a href="https://github.com/Ducksss/billy-try-on/issues">Report a bug or request a feature</a>
+  </p>
+  <p>
+    <a href="https://github.com/Ducksss/billy-try-on/stargazers"><img src="https://img.shields.io/github/stars/Ducksss/billy-try-on?style=flat-square&color=c2401f" alt="GitHub stars"></a>
+    <a href="https://github.com/Ducksss/billy-try-on/issues"><img src="https://img.shields.io/github/issues/Ducksss/billy-try-on?style=flat-square&color=c2401f" alt="Open GitHub issues"></a>
+    <a href="extension/manifest.json"><img src="https://img.shields.io/badge/Chrome-Manifest_V3-c2401f?style=flat-square&logo=googlechrome&logoColor=white" alt="Chrome Manifest V3 extension"></a>
+    <a href="#privacy-and-known-limits"><img src="https://img.shields.io/badge/status-prototype-5f5f5a?style=flat-square" alt="Prototype status"></a>
+  </p>
+</div>
 
-Live: **https://billy-try-on.vercel.app** (extension download at [/extension](https://billy-try-on.vercel.app/extension)).
+[![Billy cover showing a person, a pre-loved denim jacket and the try-on look](docs/assets/readme-cover.jpg)](https://billy-try-on.vercel.app)
 
-```
-billy/
-  web/         Next.js 16 app: landing page, studio, pre-loved feed, listing pages, try-on API
-  extension/   Chrome MV3 extension (no build step): content script, side panel, service worker
-  scripts/     Asset generation, showcase looks, extension packing
-  tests/       Playwright end-to-end test for the extension, plus its screenshots
-```
+<details>
+  <summary>Table of contents</summary>
+  <ol>
+    <li><a href="#about-the-project">About the project</a>
+      <ul><li><a href="#built-with">Built with</a></li></ul>
+    </li>
+    <li><a href="#getting-started">Getting started</a>
+      <ul>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#installation">Installation</a></li>
+      </ul>
+    </li>
+    <li><a href="#usage">Usage</a></li>
+    <li><a href="#development">Development</a></li>
+    <li><a href="#privacy-and-known-limits">Privacy and known limits</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#license">License</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="#acknowledgments">Acknowledgments</a></li>
+  </ol>
+</details>
 
-## Slides
+## About the project
 
-The [product pitch and demo](docs/slides/README.md) includes an editable PowerPoint, a PDF copy and presenter notes. It covers the working prototype, the SDG 12 idea and a proposed shopper pilot.
+Billy lets shoppers see a garment on themselves before buying. Add a full-length photo, choose a garment from a listing or shop, then save and compare the generated looks. It works in a web Studio, in Chrome's side panel and inside a fictional retailer demo called ÉTAGE.
 
-## Run it
+- **Try clothes from another shop.** Hover, drag or right-click a product photo with the Chrome extension, or upload an image or paste an image link into the Studio.
+- **Build an outfit.** Keep a piece on and layer another garment over the finished look.
+- **Compare before deciding.** Save looks, rate whether you would buy them, compare two side by side and share or download a preview.
+- **Choose the render quality.** Quick and Detailed modes show partial previews when the image provider returns them.
+- **See the retailer flow.** The demo store includes product pages, an embedded Billy drawer and a local shopping bag.
+- **Use an optional live mirror.** A Decart key enables camera-based video try-on, still captures and short recordings.
 
-```bash
-cd web
-npm install
-cp .env.example .env.local   # add OPENAI_API_KEY (and DECART_API_KEY for the live mirror)
-npm run dev                  # http://localhost:3000
-```
+[![Billy Studio with an example model and the demo garment feed](docs/assets/studio.png)](https://billy-try-on.vercel.app/studio)
 
-Load the extension: open `chrome://extensions`, switch on Developer mode, press **Load unpacked** and choose `extension/`. Click Billy in the toolbar to open the side panel and add a photo (or borrow one of the two AI-generated example models). Loaded from the repo, the extension talks to `http://localhost:3000`. The zip served at `/billy-extension.zip` is packed with the production server baked in. Either can be repointed from the gear icon in the side panel.
+The Studio screenshot uses an AI-generated example model. The cover is generated editorial artwork, not an app screenshot. All catalogue photos, showcase looks, models, sellers and prices are demo content, and ÉTAGE checkout is disabled. A preview shows appearance rather than verified physical fit.
 
-## Deploy
+Billy was built for SDG 12, responsible consumption, with the aim of making pre-loved and surplus clothing easier to evaluate. Environmental and purchase-confidence benefits have not been measured. The [pitch deck and presenter notes](docs/slides/README.md) explain the prototype and a proposed shopper pilot.
 
-The Vercel project `billy-try-on` (team `ducksss-projects`) is connected to this GitHub repo with `web` as its root directory, so every push to `main` deploys to production and other branches get preview deployments. `web/vercel.json` pins the Next.js framework preset. Production env vars: `OPENAI_API_KEY`, `BILLY_TRYON_PROVIDER=openai`, `BILLY_OPENAI_MODEL=gpt-image-2`, `BILLY_OPENAI_QUALITY=medium`, `BILLY_RATE_LIMIT_PER_HOUR=20`. Optional: `DECART_API_KEY` turns on the live mirror. Pages read it at build time, so redeploy after adding it.
+### Built with
 
-After changing `extension/`, run `npm run pack:extension` and commit the new zip so the download stays in sync. To deploy from your machine without pushing, run this from the repo root:
+[![Next.js][next-shield]][next-url]
+[![React][react-shield]][react-url]
+[![TypeScript][typescript-shield]][typescript-url]
+[![Tailwind CSS][tailwind-shield]][tailwind-url]
 
-```bash
-npm run deploy   # repacks the extension zip, then vercel deploy --prod
-```
+The web app uses Next.js 16 and React 19. The Chrome extension is plain JavaScript with no build step. OpenAI handles photo try-on by default, Gemini is an alternative provider, and the optional live mirror uses the Decart SDK. See [configuration and provider details](docs/DEVELOPMENT.md#configuration).
 
-## How a try-on works
+<p align="right"><a href="#readme-top">Back to top ↑</a></p>
 
-1. The shopper's photo is re-encoded in the browser as a JPEG of at most 1024px. That strips EXIF data, including location. The photo is kept in IndexedDB (web) or `chrome.storage.local` (extension).
-2. The garment arrives in one of these ways:
-   - a hover **Try on** button on any product photo
-   - dragging the photo onto Billy's drop target, either in the page or in the side panel
-   - the right-click menu **Try on with Billy**
-   - an upload, an image link or a paste
-3. The extension's service worker downloads the garment image itself, so cross-origin images work. It falls back to a server-side fetch, which refuses private hosts.
-4. `POST /api/try-on` sends both images to the image model. A prompt keeps the person's identity, pose and background, copies the garment faithfully, and applies a rule for the garment type: dresses replace the whole outfit, jackets layer on top. Nothing is stored on the server.
-5. With `"stream": true` the route answers in newline-delimited JSON: `partial` previews while the model renders (OpenAI's `partial_images`), then `done` or `error`. The studio and extension fade the previews in over the photo. Without `stream` it returns one JSON object, as before, and the extension falls back to that for older servers.
-6. Shoppers choose **Quick** (`quality: "low"`, about 10s, the default) or **Detailed** (`"medium"`, about 25s). A quick result offers **Render in detail**. `BILLY_OPENAI_QUALITY` sets the default for callers that don't ask; `high` is only reachable through that variable.
-7. **Keep it on** in the studio makes the finished look the base photo for the next garment, so a jacket can go over a dress. Every result in the session stays in a strip under the photo until the page is closed.
+## Getting started
 
-| Provider | Model | Notes |
-| --- | --- | --- |
-| `openai` (default) | `gpt-image-2` via `/v1/images/edits` | About 10s per look at `low`, 25s at `medium`. At `low` the model sometimes finishes before sending any preview |
-| `gemini` | `gemini-3.1-flash-image` | Wired up but untested: the available key had no prepaid credits on 2026-10-10 |
+### Prerequisites
 
-Switch with `BILLY_TRYON_PROVIDER`. The server applies a per-IP hourly limit (`BILLY_RATE_LIMIT_PER_HOUR`, default 40). Gemini doesn't stream, so it only sends `done`.
+- Node.js **20.9 or later** and npm.
+- An OpenAI API key with image generation access and available credits for live photo try-on. Browsing and the landing page's pre-rendered demo work without a key.
+- Chrome **116 or later** to use the extension.
+- Optional Gemini or Decart credentials for those providers.
 
-`gpt-image-2.5-flare` is also available on the key. One quick render took 8.6s with comparable quality but sent no preview; try it with `BILLY_OPENAI_MODEL` before switching.
+### Installation
 
-## Demo store
+1. Clone the project and install both sets of dependencies.
 
-`/shop` is ÉTAGE, a fictional fashion store (pre-owned and last-season stock) that shows Billy the way a retailer would embed it, so people can see the product without installing anything. It is styled like a minimal fashion retailer: black on white, square corners, a Bodoni Moda wordmark and Archivo Narrow captions. Billy's orange button and drawer are the only colour on the page.
+   ```sh
+   git clone https://github.com/Ducksss/billy-try-on.git
+   cd billy-try-on
+   npm ci
+   npm --prefix web ci
+   ```
 
-- Every product card and product page has **Try on**. It opens Billy's drawer, which asks for a photo once (or borrows Mei or Arjun), renders the look with streamed previews, and hands **Add to bag** back to the store.
-- **Wear it with** in the drawer layers a matching piece over the look, using the same Keep it on logic as the studio.
-- Once a piece has been tried on, its card shows the shopper's own look marked **On you**, and its product page opens on **You** with a switch back to the model. These looks are kept in the browser's IndexedDB with the shopper's photo, which is shared with the studio.
-- The bag works (kept in localStorage); checkout is switched off.
-- Products come from `web/lib/catalogue.ts` through `web/lib/shop.ts`, so try-ons use the catalogue's listing ids. Every product has an on-model photo in `web/public/looks/`.
-- The Chrome extension also works on these pages, since the product photos are ordinary images.
+2. Copy the example configuration.
 
-## Live mirror
+   ```sh
+   cp web/.env.example web/.env.local
+   ```
 
-`/mirror` streams the shopper's camera to Decart's realtime try-on model (`lucy-vton-latest`, through `@decartai/sdk`) and plays back video of them wearing the garment. They can switch garments without reconnecting, record a 6-second clip to share or download, or save a still to their looks.
+   Add your key to `web/.env.local`:
 
-- `POST /api/mirror/token` mints a 60-second client token restricted to the model and the page's origin, so `DECART_API_KEY` never reaches the browser. `GET` on the same route reports whether the mirror is switched on; the extension's side panel uses it to show a **Try it live** link.
-- Decart bills about $0.02 per second of streaming. Sessions are capped at 2 minutes (`MIRROR_MAX_SECONDS` in `web/lib/mirror.ts`, enforced in the token and in the page), stop when the tab is hidden, and count against the same per-IP hourly limit as try-ons.
-- Without the key, the entry points in the studio and on listing pages are hidden and `/mirror` explains that it is off.
-- The SDK (and LiveKit under it) is loaded only when someone presses **Start the mirror**.
+   ```dotenv
+   OPENAI_API_KEY=your_key_here
+   ```
 
-## Scripts
+   Keep this file local. [The configuration guide](docs/DEVELOPMENT.md#configuration) covers provider selection, render quality, rate limits and the optional live mirror.
 
-From the repo root:
+3. Start the web app from the repository root.
 
-| Command | What it does |
+   ```sh
+   npm run dev
+   ```
+
+   Open [localhost:3000](http://localhost:3000). The demo images are already committed, so asset generation is not needed for setup.
+
+4. Load the extension if you want to try clothes on other sites.
+
+   Open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked** and select this repository's `extension/` folder. Click Billy in the toolbar to open the side panel. This copy connects to `http://localhost:3000` by default, and the panel's gear icon lets you change the server.
+
+   For the hosted demo, [download the extension](https://billy-try-on.vercel.app/extension), unzip it and load the extracted `billy-extension/` folder the same way. The download connects to the hosted server.
+
+<p align="right"><a href="#readme-top">Back to top ↑</a></p>
+
+## Usage
+
+1. Open the **Studio** or Chrome side panel and upload a full-length photo, use the camera or borrow an AI-generated example model.
+2. Pick a piece from the feed, upload a garment, paste its image link or use the extension on a product photo.
+3. Choose **Quick** or **Detailed** and run a try-on. Each live generation uses the configured provider's API credits.
+4. Save the look and answer **Would you buy it?**, drag the comparison handle, or choose **Keep it on** to add another piece.
+5. Compare saved looks side by side or use the share and download controls.
+
+| Surface | What to try |
 | --- | --- |
-| `npm run assets` | Generates the 12 catalogue garments and 2 example models with `gpt-image-2` (skips existing files) |
-| `npm run looks` | Renders the 12 showcase looks (landing page and demo store) through the running app's own `/api/try-on`, skipping existing files |
-| `npm run pack:extension` | Rebuilds `web/public/billy-extension.zip` pointing at production. Run it after changing `extension/` |
-| `npm run pack:extension:local` | Same, but the zip defaults to `http://localhost:3000` |
-| `npm run test:extension` | Loads the extension in Playwright's Chromium against a mock shop page and checks 17 behaviours (18 with the mock), including one real try-on, streamed previews, the quality toggle and Render in detail. Needs `npm run dev`; `BILLY_SERVER=http://localhost:3100` points it at another port. Add `-- --skip-generate` to skip the paid call |
+| [Studio](https://billy-try-on.vercel.app/studio) | Photo try-on, outfit layering, saved looks and comparisons |
+| [Pre-loved feed](https://billy-try-on.vercel.app/discover) | Twelve fictional pre-loved and surplus listings |
+| [Chrome extension](https://billy-try-on.vercel.app/extension) | Hover **Try on**, drag a product image or choose **Try on with Billy** from its right-click menu |
+| [ÉTAGE demo store](https://billy-try-on.vercel.app/shop) | Embedded try-on, product photos marked **On you** and a local shopping bag |
+| [Live mirror](https://billy-try-on.vercel.app/mirror) | Camera try-on when the deployment has a Decart key |
 
-## Demo data
+<details>
+  <summary>See the demo store and Chrome side panel</summary>
+  <p><a href="https://billy-try-on.vercel.app/shop"><img src="docs/assets/shop.png" alt="ÉTAGE demo store with product photos and Billy try-on buttons" width="960"></a></p>
+  <p><img src="tests/screenshots/ext-2-panel-ready.png" alt="Billy Chrome side panel ready to try a garment on the example model Mei" width="320"></p>
+  <p>The store image is a browser capture. The extension image is existing end-to-end test evidence using an AI-generated example model.</p>
+</details>
 
-All garment photos, the two models (Mei and Arjun) and every look on the site are AI-generated. Sellers, prices and listings are fictional and are labelled as demo data on the listing pages and in the footer. ÉTAGE is a made-up brand; the store says so in a banner on every page and in its footer.
+## Development
 
-## Known limits
+Run these commands from the repository root:
 
-- The production try-on endpoint is public and spends the OpenAI key on every call. The only guard is the in-memory per-IP limit (20 an hour in production), which resets on deploy and is per instance.
-- The server-fetch guard checks hostnames, not resolved IPs.
-- The extension asks for `<all_urls>` so it can read product images on any shop. A store release would need to justify that or switch to `activeTab`.
-- The right-click menu and the in-page **Open Billy** button (`chrome.sidePanel.open` from a content-script click) are not covered by the automated test. Check them by hand in Chrome.
-- The live mirror has not run against a real Decart session: no key was available on 2026-10-10. The token route was checked against Decart's live API (a fake key gets its 401), and the page was checked up to the connect step with a synthetic camera. Test it with a real key before showing it.
-- "Ask a friend" uses the system share sheet where the browser can share files, and copies the image to the clipboard elsewhere.
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the local Next.js app |
+| `npm --prefix web run lint` | Check the web source with ESLint |
+| `npm --prefix web run build` | Build the production web app |
+| `npm run test:extension -- --skip-generate` | Test the extension with mocked rendering while the local app is running |
+| `npm run assets` | Generate missing catalogue and model photos, using API credits |
+| `npm run looks` | Generate missing showcase looks through the running app, using API credits |
+| `npm run pack:extension` | Rebuild the extension download with the hosted server URL |
 
-## Next steps
+The [development guide](docs/DEVELOPMENT.md) covers the repository layout, API, storage, tests, packing and deployment. The [asset guide](docs/assets/README.md) contains the cover and share-card prompts, screenshot sources and reusable image files.
 
-- "Make it a video" from a still look. OpenAI's video API (Sora) was shut down on 2026-09-24 (`/v1/videos` returns 404), so this needs another provider: Veo 3.1 Lite through the existing Gemini key once billing is on (about $0.05/s at 720p), FASHN's image-to-video (`FASHN_API_KEY`), or Kling through fal (`FAL_KEY`). The live mirror's clip recorder covers the same need at no extra cost.
-- A phone-as-camera mode for the mirror (QR code to open `/mirror` on a phone), as in Decart's digital-mirror example.
-- Open-source video try-on models (MagicTryOn, ViViD, CatV2TON) have no hosted APIs and most are non-commercial; not worth self-hosting yet.
-- Real seller feeds (resale-platform exports, retailer surplus CSVs) instead of `web/lib/catalogue.ts`.
-- Export saved-look verdicts so the purchase-confidence test in the pitch can be run with real shoppers.
+<p align="right"><a href="#readme-top">Back to top ↑</a></p>
+
+## Privacy and known limits
+
+- Photos and saved looks persist in the browser, in IndexedDB for the web app and `chrome.storage.local` for the extension. Clearing browser data removes them.
+- The browser normalises uploaded photos and strips EXIF metadata. A live try-on sends the person and garment images through Billy's server to the configured image provider. Billy does not persist them on its server, and provider handling is separate.
+- The live mirror sends camera video to Decart. Its sessions are capped at two minutes and stop when the tab is hidden.
+- The public try-on endpoint incurs provider costs. Its per-IP rate limit is in memory, resets on restart or deployment and applies separately to each server instance.
+- The remote garment fetch guard checks hostnames, rather than resolved IPs, and follows redirects. It needs further protection before use with untrusted traffic at scale.
+- The extension requests `<all_urls>` to read product images across shops.
+- Gemini and a real Decart mirror session still need provider validation. The extension's right-click menu and opening its native side panel from a page need manual Chrome checks.
+
+[Further details](docs/DEVELOPMENT.md#known-limits) are in the development guide.
+
+## Roadmap
+
+- [x] Web Studio and Chrome Manifest V3 extension
+- [x] Quick and Detailed renders with streamed previews
+- [x] Outfit layering, saved looks, verdicts and comparisons
+- [x] Retailer demo with embedded try-on
+- [x] Optional live mirror implementation
+- [ ] Validate Gemini and the live mirror with funded provider accounts
+- [ ] Connect real seller feeds and retailer surplus stock
+- [ ] Export verdicts and run the proposed shopper pilot
+- [ ] Strengthen public API cost controls and remote-image fetching
+- [ ] Explore phone-as-camera and video previews from saved looks
+
+Track proposals and bugs in the [project issues](https://github.com/Ducksss/billy-try-on/issues).
+
+## Contributing
+
+Open an issue to discuss a larger change, or fork the repository and submit a focused pull request. Use a branch such as `PinZheng/studio-comparison`, keep API keys out of commits, and run lint, the production build and the relevant tests. For UI changes, check both a desktop and a phone-sized viewport. After changing `extension/`, repack its download so the hosted ZIP stays in sync.
+
+Include the problem, the resulting behaviour and the checks you ran in your pull request. Use a title such as `docs(docs): improve setup instructions` and add screenshots when the UI changes.
+
+## License
+
+This repository currently has no licence file. Reuse and redistribution terms have not been specified. Contact the maintainer before redistributing the project.
+
+## Contact
+
+Maintainer: [Ducksss on GitHub](https://github.com/Ducksss). Use [project issues](https://github.com/Ducksss/billy-try-on/issues) for questions, bug reports and feature requests.
+
+## Acknowledgments
+
+- [Best-README-Template](https://github.com/othneildrew/Best-README-Template) for the README structure.
+- [Anywear](https://anywear.decart.ai/) for the live-camera try-on reference.
+- [United Nations SDG 12](https://sdgs.un.org/goals/goal12) for the responsible consumption challenge.
+- [Phosphor Icons](https://phosphoricons.com/), [Motion](https://motion.dev/) and [idb-keyval](https://github.com/jakearchibald/idb-keyval) for icons, animation and browser storage.
+- [OpenAI](https://platform.openai.com/), [Google Gemini](https://ai.google.dev/) and [Decart](https://decart.ai/) for the image and realtime provider integrations.
+- [Shields.io](https://shields.io/) for the project badges.
+
+<p align="right"><a href="#readme-top">Back to top ↑</a></p>
+
+[next-shield]: https://img.shields.io/badge/Next.js-141413?style=for-the-badge&logo=nextdotjs&logoColor=white
+[next-url]: https://nextjs.org/
+[react-shield]: https://img.shields.io/badge/React-141413?style=for-the-badge&logo=react&logoColor=61dafb
+[react-url]: https://react.dev/
+[typescript-shield]: https://img.shields.io/badge/TypeScript-141413?style=for-the-badge&logo=typescript&logoColor=3178c6
+[typescript-url]: https://www.typescriptlang.org/
+[tailwind-shield]: https://img.shields.io/badge/Tailwind_CSS-141413?style=for-the-badge&logo=tailwindcss&logoColor=06b6d4
+[tailwind-url]: https://tailwindcss.com/
