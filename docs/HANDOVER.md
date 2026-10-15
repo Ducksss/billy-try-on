@@ -37,6 +37,8 @@ The full list is under [Known limits](DEVELOPMENT.md#known-limits). The three th
 - **Live mirror.** It has never run against a real Decart session. Test it with a funded key before showing it.
 - **Extension permissions.** The extension asks for access to every site. A Chrome Web Store release needs a narrower permission or a written justification.
 
+Lower priority: the server-side garment download checks where a hostname resolves, but a name that changes its DNS answer between the check and the fetch (DNS rebinding) can still reach an internal address. Only JPEG, PNG and WebP responses are accepted, and they go to the image model rather than back to the caller, so the exposure is small.
+
 ## What comes next
 
 The [Billy next-step plan](https://claude.ai/code/artifact/c6ee5a33-df0f-41e9-853f-be6404729ef5) turns the pitch panel's feedback into a 12-week path: test three USP promises, run a consumer beta and a seller pilot, then launch. The doc is private, so ask the current maintainer to share it. The [pitch deck and presenter notes](slides/README.md) explain the prototype and the proposed shopper pilot.

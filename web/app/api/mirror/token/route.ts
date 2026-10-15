@@ -17,9 +17,9 @@ export async function POST(request: Request) {
   if (!mirrorEnabled()) {
     return Response.json({ error: "Live mirror isn't set up on this server." }, { status: 503 });
   }
-  // Only /mirror on this site may mint tokens. Browsers always send Origin on a POST, so a
-  // missing or foreign one is a script or another site, which would otherwise get a token
-  // with no origin restriction and stream on our Decart bill.
+  // Browsers always send Origin on a POST, so this stops other sites from minting tokens
+  // through their visitors' browsers, and every token is tied to an origin. A script can
+  // still forge the header: the per-IP limit and the session cap are what bound its cost.
   const origin = request.headers.get("origin");
   if (!origin || !sameHost(origin, request.headers.get("host"))) {
     return Response.json({ error: "Start the live mirror from Billy's /mirror page." }, { status: 403 });

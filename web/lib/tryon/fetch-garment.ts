@@ -61,7 +61,8 @@ async function publicUrl(raw: string): Promise<URL> {
 
 // Stops reading as soon as the body passes the limit, so a huge response can't fill memory.
 async function readCapped(res: Response): Promise<Buffer> {
-  const reader = res.body!.getReader();
+  const reader = res.body?.getReader();
+  if (!reader) throw emptyImage();
   const chunks: Uint8Array[] = [];
   let size = 0;
   for (;;) {
@@ -74,7 +75,9 @@ async function readCapped(res: Response): Promise<Buffer> {
     }
     chunks.push(value);
   }
+  if (size === 0) throw emptyImage();
   return Buffer.concat(chunks);
 }
 
 const tooLarge = () => new TryOnError("That garment image is larger than 8 MB.", 413);
+const emptyImage = () => new TryOnError("That garment link returned an empty image.", 422);
