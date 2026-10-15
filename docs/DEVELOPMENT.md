@@ -16,7 +16,7 @@ billy-try-on/
 ├── extension/             Chrome MV3 extension, no build step
 ├── scripts/               Image generation and extension packing
 ├── tests/                 Extension end-to-end script, fixtures and evidence
-└── docs/                  Development guide, README assets and pitch deck
+└── docs/                  Development guide, handover note, README assets and pitch deck
 ```
 
 ## Local setup
@@ -56,7 +56,7 @@ Mirror entry points read whether a Decart key exists during page generation. Red
 
 1. The browser re-encodes the person's photo as a JPEG of at most 1024px and strips EXIF metadata, including location. It stores the photo locally.
 2. A garment arrives from the catalogue, an upload, a pasted image or image link, or the extension's hover, drag or right-click controls.
-3. The extension's service worker fetches external garment images. The web flow can use a server-side fetch when the browser cannot read an image.
+3. The extension's service worker fetches external garment images. The web flow can use a server-side fetch when the browser cannot read an image. That fetch follows at most three redirects, re-checks each hop, refuses hosts that are or resolve to private addresses, and stops reading past 8 MB.
 4. `POST /api/try-on` validates the images, selects the provider and builds a garment-specific prompt. Dresses replace the outfit and jackets layer over it, while the prompt asks the model to preserve the person's identity, pose and background.
 5. With streaming enabled, the route returns newline-delimited JSON containing partial previews, then a final result or error. The clients fade previews into the photograph.
 6. **Keep it on** uses the finished look as the base image for the next garment. Results also stay in the session strip until the page closes.
@@ -70,7 +70,7 @@ The application does not persist these images on its server. Requests transmit t
 | `GET /api/catalogue` | Return the fictional garment catalogue |
 | `POST /api/try-on` | Generate a photo try-on, using JSON or an NDJSON stream |
 | `GET /api/mirror/token` | Report whether the live mirror is enabled and its maximum session duration |
-| `POST /api/mirror/token` | Mint a short-lived Decart client token when the mirror is configured |
+| `POST /api/mirror/token` | Mint a short-lived Decart client token when the mirror is configured. Requests must come from the site's own pages |
 
 A minimal try-on request selects a committed catalogue garment:
 
@@ -106,7 +106,7 @@ The web app shares the person's photo and saved looks through the `billy` Indexe
 
 `/mirror` streams camera video to Decart's `lucy-vton-latest` model through `@decartai/sdk`. It supports garment changes without reconnecting, still captures and six-second recordings. The SDK and its LiveKit dependencies load when the shopper starts the mirror.
 
-The token endpoint mints a 60-second client token restricted to the model and, when supplied, the request's origin. It never returns the server's Decart key. Both token constraints and the page cap sessions at `MIRROR_MAX_SECONDS`, currently 120 seconds. The page stops streaming when hidden. Mirror token requests use the same per-IP limiter implementation as photo try-on, with a separate `mirror:` bucket.
+The token endpoint mints a 60-second client token restricted to the model and the requesting page's origin. A POST without an `Origin` header matching the site's own host gets a 403, which stops other websites from minting tokens through their visitors' browsers. A script can forge the header, so the per-IP limit and the session cap below remain the cost guard. It never returns the server's Decart key. Both token constraints and the page cap sessions at `MIRROR_MAX_SECONDS`, currently 120 seconds. The page stops streaming when hidden. Mirror token requests use the same per-IP limiter implementation as photo try-on, with a separate `mirror:` bucket.
 
 Without a Decart key, mirror entry points are hidden and the page explains that the feature is off. Streaming incurs provider charges. A real Decart session remains unvalidated, so check the full flow with a funded account before a live demonstration.
 
@@ -159,7 +159,7 @@ The root command `npm run deploy` repacks the production extension and runs `ver
 ## Known limits
 
 - Live photo try-on is a public, paid-provider endpoint with only an in-memory per-IP limiter. Limits reset on restart and are separate across server instances.
-- The server-side image guard rejects private hostnames, but does not validate DNS resolution or redirect destinations. Downloads follow redirects and the size check happens after buffering.
+- The server-side image guard checks hostnames, the addresses they resolve to and every redirect. A name that changes its DNS answer between the check and the fetch (DNS rebinding) can still reach an internal address.
 - The extension requests `<all_urls>` for product images across stores. A store release needs a deliberate permission model.
 - Gemini is implemented but has not completed funded provider validation. A real Decart mirror session also remains untested.
 - Image generation can misrepresent clothing and does not establish physical fit, garment condition or availability.

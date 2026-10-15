@@ -17,6 +17,13 @@ export async function POST(request: Request) {
   if (!mirrorEnabled()) {
     return Response.json({ error: "Live mirror isn't set up on this server." }, { status: 503 });
   }
+  // Browsers always send Origin on a POST, so this stops other sites from minting tokens
+  // through their visitors' browsers, and every token is tied to an origin. A script can
+  // still forge the header: the per-IP limit and the session cap are what bound its cost.
+  const origin = request.headers.get("origin");
+  if (!origin || !sameHost(origin, request.headers.get("host"))) {
+    return Response.json({ error: "Start the live mirror from Billy's /mirror page." }, { status: 403 });
+  }
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim() || "local";
   const limit = checkRateLimit(`mirror:${ip}`);
   if (!limit.ok) {
@@ -26,13 +33,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const origin = request.headers.get("origin");
   try {
     const client = createDecartClient({ apiKey: process.env.DECART_API_KEY });
     const token = await client.tokens.create({
       expiresIn: 60,
       allowedModels: [MIRROR_MODEL],
-      ...(origin ? { allowedOrigins: [origin] } : {}),
+      allowedOrigins: [origin],
       constraints: { realtime: { maxSessionDuration: MIRROR_MAX_SECONDS } },
     });
     return Response.json(
@@ -42,5 +48,13 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error("[mirror] token", err);
     return Response.json({ error: "Couldn't start the live mirror. Try again in a moment." }, { status: 502 });
+  }
+}
+
+function sameHost(origin: string, host: string | null) {
+  try {
+    return !!host && new URL(origin).host === host;
+  } catch {
+    return false;
   }
 }

@@ -237,4 +237,4 @@ Sources and assets:
 
 ## Prototype readiness
 
-Read the [root README](../../README.md) for the current limits before showing Billy outside a controlled demo. The public generation endpoint spends the provider key, its per-IP limiter is in memory, the image-fetch guard checks hostnames rather than resolved IPs, and the extension requests access to all URLs. These limits still apply. The live mirror needs a real Decart session test, and Gemini is wired up but untested. Verdict export, real seller feeds and the shopper pilot are future work.
+Read the [root README](../../README.md) for the current limits before showing Billy outside a controlled demo. The public generation endpoint spends the provider key, its per-IP limiter is in memory, and the extension requests access to all URLs. These limits still apply. The live mirror needs a real Decart session test, and Gemini is wired up but untested. Verdict export, real seller feeds and the shopper pilot are future work.
