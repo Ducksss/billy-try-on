@@ -25,8 +25,6 @@ The Chrome extension is not on the Chrome Web Store. Shoppers download a ZIP fro
 
 | Item | State | What to do |
 | --- | --- | --- |
-| [Ducksss/billy-try-on#2](https://github.com/Ducksss/billy-try-on/pull/2), stop tracking `.claude/launch.json` | Ready, checks pass | Merge |
-| [Ducksss/billy-try-on#3](https://github.com/Ducksss/billy-try-on/pull/3), ImgBot image compression | Ready, checks pass | Merge |
 | Branch `claude/waitlist-test`: `/join/*` landing pages, waitlist and a daily try-on cap | Parked as a draft pull request. Tested locally, never run against a real backend | Use it for Step 1 of the plan. It needs an InsForge project, set up as that branch's development guide describes |
 
 ## Known risks
