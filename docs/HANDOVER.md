@@ -37,7 +37,7 @@ The full list is under [Known limits](DEVELOPMENT.md#known-limits). The three th
 - **Live mirror.** It has never run against a real Decart session. Test it with a funded key before showing it.
 - **Extension permissions.** The extension asks for access to every site. A Chrome Web Store release needs a narrower permission or a written justification.
 
-Lower priority: the server-side garment download checks where a hostname resolves, but a name that changes its DNS answer between the check and the fetch (DNS rebinding) can still reach an internal address. Only JPEG, PNG and WebP responses are accepted, and they go to the image model rather than back to the caller, so the exposure is small.
+Lower priority: the server-side garment download checks where a hostname resolves, but a name that changes its DNS answer between the check and the fetch (DNS rebinding) can still reach an internal address. Only JPEG, PNG and WebP responses are accepted, and the caller never gets the raw response back, only a look generated from it, so the exposure is small.
 
 ## What comes next
 
