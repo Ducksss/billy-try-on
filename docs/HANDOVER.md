@@ -25,13 +25,13 @@ The Chrome extension is not on the Chrome Web Store. Shoppers download a ZIP fro
 
 | Item | State | What to do |
 | --- | --- | --- |
-| Branch `claude/waitlist-test`: `/join/*` landing pages, waitlist and a daily try-on cap | Parked as a draft pull request. Tested locally, never run against a real backend | Use it for Step 1 of the plan. It needs an InsForge project, set up as that branch's development guide describes |
+| `/join/*` landing pages, waitlist and daily try-on cap | Built and tested locally, never run against a real backend | Set up InsForge as the [development guide](DEVELOPMENT.md#waitlist-test) describes, then use the pages for Step 1 of the plan |
 
 ## Known risks
 
 The full list is under [Known limits](DEVELOPMENT.md#known-limits). The three that matter first:
 
-- **Cost.** `/api/try-on` is public and spends the OpenAI key. The only guard in `main` is an in-memory per-IP limit, which resets on deploy and is separate on each server instance. Set a spending cap on the OpenAI account, or merge the daily cap from `claude/waitlist-test`, before sending traffic.
+- **Cost.** `/api/try-on` is public and spends the OpenAI key. Without InsForge, the only guard is an in-memory per-IP limit, which resets on deploy and is separate on each server instance. Set a spending cap on the OpenAI account, or set up InsForge and `BILLY_DAILY_TRYON_CAP`, before sending traffic.
 - **Live mirror.** It has never run against a real Decart session. Test it with a funded key before showing it.
 - **Extension permissions.** The extension asks for access to every site. A Chrome Web Store release needs a narrower permission or a written justification.
 
