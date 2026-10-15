@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { reserveTryOn } from "@/lib/backend";
 import { getListing } from "@/lib/catalogue";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { fetchGarmentImage } from "@/lib/tryon/fetch-garment";
@@ -69,6 +70,13 @@ export async function POST(request: Request) {
     return errorResponse(err);
   }
   if (!garment) return fail("Add a garment image, link or catalogue item.", 400);
+  if (!(await reserveTryOn())) {
+    const midnight = new Date();
+    midnight.setUTCHours(24, 0, 0, 0);
+    return fail("Billy has reached today's try-on limit. Try again tomorrow.", 503, {
+      "Retry-After": String(Math.ceil((midnight.getTime() - Date.now()) / 1000)),
+    });
+  }
 
   const provider = activeProvider();
   const args = { person, garment, prompt: buildTryOnPrompt(category, title), quality };

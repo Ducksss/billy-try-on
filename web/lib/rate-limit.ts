@@ -3,8 +3,7 @@
 const hits = new Map<string, number[]>();
 const WINDOW_MS = 60 * 60 * 1000;
 
-export function checkRateLimit(ip: string) {
-  const limit = Number(process.env.BILLY_RATE_LIMIT_PER_HOUR || 40);
+export function checkRateLimit(ip: string, limit = Number(process.env.BILLY_RATE_LIMIT_PER_HOUR || 40)) {
   const now = Date.now();
   const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
   if (recent.length >= limit) {
