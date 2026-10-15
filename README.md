@@ -160,7 +160,7 @@ Run these commands from the repository root:
 | `npm run looks` | Generate missing showcase looks through the running app, using API credits |
 | `npm run pack:extension` | Rebuild the extension download with the hosted server URL |
 
-The [development guide](docs/DEVELOPMENT.md) covers the repository layout, API, storage, tests, packing and deployment. The [asset guide](docs/assets/README.md) contains the cover and share-card prompts, screenshot sources and reusable image files.
+The [development guide](docs/DEVELOPMENT.md) covers the repository layout, API, storage, tests, packing and deployment. The [asset guide](docs/assets/README.md) contains the cover and share-card prompts, screenshot sources and reusable image files. Taking the project over? The [handover note](docs/HANDOVER.md) lists the accounts, keys and open work to transfer.
 
 <p align="right"><a href="#readme-top">Back to top ↑</a></p>
 
@@ -170,7 +170,7 @@ The [development guide](docs/DEVELOPMENT.md) covers the repository layout, API, 
 - The browser normalises uploaded photos and strips EXIF metadata. A live try-on sends the person and garment images through Billy's server to the configured image provider. Billy does not persist them on its server, and provider handling is separate.
 - The live mirror sends camera video to Decart. Its sessions are capped at two minutes and stop when the tab is hidden.
 - The public try-on endpoint incurs provider costs. Its per-IP rate limit is in memory, resets on restart or deployment and applies separately to each server instance.
-- The remote garment fetch guard checks hostnames, rather than resolved IPs, and follows redirects. It needs further protection before use with untrusted traffic at scale.
+- The remote garment fetch guard re-checks every redirect and the addresses a hostname resolves to, and stops reading past 8 MB. A name that changes its answer between the check and the fetch (DNS rebinding) can still get through.
 - The extension requests `<all_urls>` to read product images across shops.
 - Gemini and a real Decart mirror session still need provider validation. The extension's right-click menu and opening its native side panel from a page need manual Chrome checks.
 
@@ -186,7 +186,8 @@ The [development guide](docs/DEVELOPMENT.md) covers the repository layout, API, 
 - [ ] Validate Gemini and the live mirror with funded provider accounts
 - [ ] Connect real seller feeds and retailer surplus stock
 - [ ] Export verdicts and run the proposed shopper pilot
-- [ ] Strengthen public API cost controls and remote-image fetching
+- [x] Harden remote-image fetching and live-mirror tokens
+- [ ] Strengthen public API cost controls (a shared daily cap is drafted on the `claude/waitlist-test` branch)
 - [ ] Explore phone-as-camera and video previews from saved looks
 
 Track proposals and bugs in the [project issues](https://github.com/Ducksss/billy-try-on/issues).
