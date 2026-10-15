@@ -16,6 +16,7 @@ billy-try-on/
 ├── extension/             Chrome MV3 extension, no build step
 ├── scripts/               Image generation and extension packing
 ├── tests/                 Extension end-to-end script, fixtures and evidence
+├── migrations/            InsForge migration for the waitlist test
 └── docs/                  Development guide, handover note, README assets and pitch deck
 ```
 
@@ -47,6 +48,9 @@ Use [web/.env.example](../web/.env.example) as the source of configuration names
 | `BILLY_GEMINI_MODEL` | `gemini-3.1-flash-image` | Gemini image model |
 | `BILLY_RATE_LIMIT_PER_HOUR` | `40` | Requests per IP per hour, in memory and per instance |
 | `DECART_API_KEY` | Unset | Enables the optional live mirror |
+| `INSFORGE_URL` | Unset | InsForge backend for the waitlist test and the daily cap |
+| `INSFORGE_ANON_KEY` | Unset | Server-only key for that backend |
+| `BILLY_DAILY_TRYON_CAP` | Unset | Try-ons allowed per UTC day across all instances. Needs InsForge |
 
 The shopper controls send `low` for **Quick** and `medium` for **Detailed**, overriding the server's default. `high` is available through `BILLY_OPENAI_QUALITY` for callers that omit quality. The UI estimates roughly 10 seconds for Quick and 25 seconds for Detailed, but provider latency varies. Gemini returns a final image without partial previews. Provider availability and billing must be checked against the account you use.
 
@@ -70,6 +74,8 @@ The application does not persist these images on its server. Requests transmit t
 | `GET /api/catalogue` | Return the fictional garment catalogue |
 | `POST /api/try-on` | Generate a photo try-on, using JSON or an NDJSON stream |
 | `GET /api/mirror/token` | Report whether the live mirror is enabled and its maximum session duration |
+| `POST /api/waitlist` | Add a sign-up from a `/join` page and return `{ added }` |
+| `POST /api/waitlist/view` | Count one landing-page view, sent as a beacon |
 | `POST /api/mirror/token` | Mint a short-lived Decart client token when the mirror is configured. Requests must come from the site's own pages |
 
 A minimal try-on request selects a committed catalogue garment:
@@ -109,6 +115,34 @@ The web app shares the person's photo and saved looks through the `billy` Indexe
 The token endpoint mints a 60-second client token restricted to the model and the requesting page's origin. A POST without an `Origin` header matching the site's own host gets a 403, which stops other websites from minting tokens through their visitors' browsers. A script can forge the header, so the per-IP limit and the session cap below remain the cost guard. It never returns the server's Decart key. Both token constraints and the page cap sessions at `MIRROR_MAX_SECONDS`, currently 120 seconds. The page stops streaming when hidden. Mirror token requests use the same per-IP limiter implementation as photo try-on, with a separate `mirror:` bucket.
 
 Without a Decart key, mirror entry points are hidden and the page explains that the feature is off. Streaming incurs provider charges. A real Decart session remains unvalidated, so check the full flow with a funded account before a live demonstration.
+
+## Waitlist test
+
+Three landing pages test which promise people sign up for. This is Step 1 of the next-step plan linked from the [handover note](HANDOVER.md). Each page has one headline, the same layout and a waitlist form.
+
+| Page | Promise |
+| --- | --- |
+| `/join/looks` | See it on you and know it fits (shoppers) |
+| `/join/resell` | Buy it, wear it, resell it (shoppers) |
+| `/join/sellers` | Sell pre-loved faster (sellers, with an optional "Where do you sell?" field) |
+
+- Point each ad or post at one page and add `?utm_source=<channel>`. The channel is saved with each sign-up.
+- Each page counts one view per visit, and at most 30 an hour from one address. Running `select * from waitlist_results;` in InsForge's SQL editor gives views, sign-ups and the sign-up rate per page.
+- The pages are kept out of search engines and aren't linked from the site, so the only visitors are the ones you send.
+- The copy is in [web/lib/join.ts](../web/lib/join.ts). Features that aren't built yet are marked **Coming soon** on the page.
+
+The same database holds the shared daily try-on cap. Set `BILLY_DAILY_TRYON_CAP` to the most try-ons you want to pay for in one UTC day. Past it, try-ons get a 503 asking the shopper to come back tomorrow. If InsForge can't be reached, try-ons are let through and the per-IP limit still applies.
+
+Without the InsForge variables, the pages still render and the form says the waitlist isn't open, while try-ons are unaffected. To set it up, run these from the repository root:
+
+```sh
+npx @insforge/cli login
+npx @insforge/cli create        # or: npx @insforge/cli link
+npx @insforge/cli db migrations up --all
+npx @insforge/cli secrets get ANON_KEY
+```
+
+Set `INSFORGE_URL` (the `oss_host` in `.insforge/project.json`) and `INSFORGE_ANON_KEY` in `web/.env.local` and in the deployment. The browser never calls InsForge. The anon role can only run the `join_waitlist` and `bump_counter` functions, and can't read the sign-up list. The [migration](../migrations/20261011120000_create-waitlist.sql) has the tables, functions and results view.
 
 ## Checks
 
@@ -158,7 +192,7 @@ The root command `npm run deploy` repacks the production extension and runs `ver
 
 ## Known limits
 
-- Live photo try-on is a public, paid-provider endpoint with only an in-memory per-IP limiter. Limits reset on restart and are separate across server instances.
+- Live photo try-on is a public, paid-provider endpoint. Its per-IP limiter is in memory, resets on restart and is separate across server instances. With InsForge set up, `BILLY_DAILY_TRYON_CAP` adds a shared daily cap, which lets try-ons through if InsForge is unreachable.
 - The server-side image guard checks hostnames, the addresses they resolve to and every redirect. A name that changes its DNS answer between the check and the fetch (DNS rebinding) can still reach an internal address.
 - The extension requests `<all_urls>` for product images across stores. A store release needs a deliberate permission model.
 - Gemini is implemented but has not completed funded provider validation. A real Decart mirror session also remains untested.

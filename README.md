@@ -187,7 +187,7 @@ The [development guide](docs/DEVELOPMENT.md) covers the repository layout, API, 
 - [ ] Connect real seller feeds and retailer surplus stock
 - [ ] Export verdicts and run the proposed shopper pilot
 - [x] Harden remote-image fetching and live-mirror tokens
-- [ ] Strengthen public API cost controls (a shared daily cap is drafted on the `claude/waitlist-test` branch)
+- [ ] Strengthen public API cost controls (`BILLY_DAILY_TRYON_CAP` adds a shared daily cap once InsForge is set up)
 - [ ] Explore phone-as-camera and video previews from saved looks
 
 Track proposals and bugs in the [project issues](https://github.com/Ducksss/billy-try-on/issues).
